@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#07110f">
+  <meta name="description" content="Protocolo Cero: sobrevive al brote, recupera las muestras y escapa del laboratorio.">
+  <title>Protocolo Cero | Laboratorio de contención</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/css/styles.css">
+  <script type="importmap">
+    {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/","@dimforge/rapier3d-compat":"https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.14.0/rapier.es.js"}}
+  </script>
+</head>
+<body>
+  <main id="game" aria-label="Videojuego Protocolo Cero">
+    <canvas id="scene" aria-label="Escenario 3D del laboratorio"></canvas>
+
+    <div class="scanlines" aria-hidden="true"></div>
+    <header class="topbar hud-hidden" id="topbar">
+      <a class="brand" href="#" aria-label="Protocolo Cero"><span class="brand-mark">P<span>0</span></span><span class="brand-name">PROTOCOL<span>ZERO</span></span></a>
+      <div class="mission-chip"><i></i><span>SECTOR 04 <b>/</b> CONTENCIÓN · <span id="levelBadge">NIVEL 01 / 04</span></span></div>
+      <button class="icon-button" id="pauseBtn" aria-label="Pausar partida" title="Pausar (Esc)"><span class="pause-icon">Ⅱ</span></button>
+    </header>
+
+    <section class="hud hud-hidden" id="hud" aria-live="polite">
+      <div class="hud-left">
+        <div class="panel objective-panel">
+          <div class="eyebrow"><span class="live-dot"></span>OBJETIVO ACTUAL <span class="mono" id="objectiveStep">01 / 03</span></div>
+          <div class="objective-title" id="objectiveTitle">Recupera las muestras</div>
+          <div class="objective-sub" id="objectiveSub">Localiza 3 muestras de cultivo</div>
+          <div class="progress-track"><span id="sampleProgress"></span></div>
+        </div>
+        <div class="panel vitals-panel">
+          <div class="vital-heading"><span>INTEGRIDAD</span><b id="healthText">100%</b></div>
+          <div class="health-track"><span id="healthBar"></span></div>
+          <div class="vitals-footer"><span><i class="vital-dot"></i>SUJETO 07</span><span class="mono" id="statusText">ESTABLE</span></div>
+        </div>
+      </div>
+      <div class="hud-right">
+        <div class="panel threat-panel"><span class="eyebrow">AMENAZAS ACTIVAS</span><div class="threat-count"><b id="enemyCount">03</b><span>HOSTILES</span><span class="threat-bars"><i></i><i></i><i></i></span></div></div>
+        <div class="panel timer-panel"><span class="eyebrow">TIEMPO TRANSCURRIDO</span><div class="timer mono" id="timer">00:00</div></div>
+      </div>
+      <div class="bottom-center"><div class="crosshair" id="crosshair"><i></i><i></i><i></i><i></i><b></b></div><div class="toast" id="toast" aria-live="assertive"></div></div>
+      <div class="weapon-panel panel"><div class="weapon-icon"><span></span></div><div class="weapon-info"><div class="eyebrow">DISPOSITIVO DE CONTENCIÓN</div><b>IMPULSOR IÓNICO <span class="weapon-ready">● LISTO</span></b></div><label class="power-setting"><span>POTENCIA</span><input id="power" type="range" min="7" max="19" value="13" aria-label="Potencia del impulsor"><b id="powerValue">13</b></label><span class="ammo mono" id="ammo">∞</span></div>
+      <div class="interact-hint" id="interactHint"><kbd>E</kbd><span>EXTRAER MUESTRA</span></div>
+      <div class="controls-pill"><span><kbd>WASD</kbd> MOVER</span><span><kbd>SHIFT</kbd> CORRER</span><span><kbd>CLICK</kbd> IMPULSO</span><span><kbd>R</kbd> INTERACTUAR</span></div>
+    </section>
+
+    <section class="overlay visible" id="startScreen">
+      <div class="overlay-content start-content">
+        <div class="kicker"><span></span>ARCHIVO CLASIFICADO <span class="mono">/ 04—17</span></div>
+        <div class="title-lockup"><div class="title-overline">ESTACIÓN BIOLÓGICA · SECTOR 04</div><h1>PROTOCOLO<br><span>CERO</span></h1><div class="title-index">P<span>0</span></div></div>
+        <p class="story">El sistema de contención ha fallado.<br><strong>Recupera las muestras de cada nivel y alcanza la salida.</strong></p>
+        <div class="briefing-grid"><div><span class="brief-number">01</span><span><b>RECUPERA</b><small>Muestras de cultivo</small></span></div><div><span class="brief-number">02</span><span><b>CONTÉN</b><small>Impulsa a los hostiles</small></span></div><div><span class="brief-number">03</span><span><b>SUPERA</b><small>4 niveles progresivos</small></span></div></div>
+        <div class="character-picker" aria-label="Selección de personaje">
+          <button class="character-arrow" id="characterPrev" aria-label="Personaje anterior">‹</button>
+          <div class="character-portrait" id="characterPortrait"><span id="characterInitial">07</span><i></i></div>
+          <div class="character-details"><small>OPERADOR SELECCIONADO</small><b id="characterName">EVA-07</b><span id="characterRole">Especialista de contención</span></div>
+          <div class="character-dots" id="characterDots" aria-hidden="true"><i class="selected"></i><i></i><i></i></div>
+          <button class="character-arrow" id="characterNext" aria-label="Siguiente personaje">›</button>
+        </div>
+        <div class="start-row"><button class="primary-button" id="startBtn"><span>INICIAR MISIÓN</span><b>↗</b></button><div class="start-note"><span class="key-cluster"><kbd>W</kbd><span><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span></span><span>MOVERSE<br><small>ARRASTRA · CÁMARA</small></span></div></div>
+        <div class="footer-note"><span>PROTOCOLO DE EMERGENCIA ACTIVO</span><span class="mono">v1.0.0 <i>●</i> SISTEMA EN LÍNEA</span></div>
+      </div>
+      <div class="side-label mono">ESTACIÓN BIOLÓGICA &nbsp;—&nbsp; 2049</div>
+    </section>
+
+    <section class="overlay hidden" id="pauseScreen"><div class="overlay-content modal-content"><div class="kicker"><span></span>SEÑAL EN ESPERA</div><h2>PAUSA</h2><p>La misión permanece en estado seguro.</p><button class="primary-button" id="resumeBtn"><span>REANUDAR MISIÓN</span><b>↗</b></button><button class="text-button" id="changeCharacter">CAMBIAR PERSONAJE Y REINICIAR</button><button class="text-button" id="pauseRestart">REINICIAR NIVEL</button></div></section>
+    <section class="overlay hidden" id="endScreen"><div class="overlay-content modal-content"><div class="kicker" id="endKicker"><span></span>REPORTE DE MISIÓN</div><h2 id="endTitle">MISIÓN<br>COMPLETADA</h2><p id="endMessage">Las muestras están aseguradas.</p><div class="final-stats"><div><span>TIEMPO</span><b class="mono" id="finalTime">00:00</b></div><div><span>MUESTRAS</span><b class="mono" id="finalSamples">03 / 03</b></div><div><span>HOSTILES</span><b class="mono" id="finalEnemies">00</b></div></div><button class="primary-button" id="restartBtn"><span>JUGAR DE NUEVO</span><b>↗</b></button><button class="primary-button hidden" id="continueBtn"><span>CONTINUAR AL NIVEL SIGUIENTE</span><b>↗</b></button></div></section>
+    <div class="loading" id="loading"><span class="loader-mark">P<span>0</span></span><span>INICIALIZANDO CONTENCIÓN</span><i></i></div>
+    <div class="error-toast" id="errorToast" role="alert"></div>
+  </main>
+  <script>
+    const loading = document.getElementById('loading');
+    const error = document.getElementById('errorToast');
+    function showStartupError(message) {
+      if (loading) loading.classList.add('done');
+      if (error) { error.textContent = message; error.classList.add('visible'); }
+    }
+    if (location.protocol === 'file:') {
+      showStartupError('Abre "abrir-juego.bat" para iniciar el juego. No abras index.html directamente.');
+    } else {
+      import('./assets/js/main.js').catch((cause) => {
+        console.error(cause);
+        showStartupError('No se pudo cargar el juego. Comprueba tu conexión a Internet y vuelve a intentarlo.');
+      });
+    }
+  </script>
+</body>
+</html>
