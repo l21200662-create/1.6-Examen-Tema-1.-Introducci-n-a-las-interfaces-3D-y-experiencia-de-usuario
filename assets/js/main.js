@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
 
 const $ = (id) => document.getElementById(id);
+const PLAYER_START = [0, 2];
 const ui = {
   canvas: $('scene'), loading: $('loading'), start: $('startScreen'), pause: $('pauseScreen'), end: $('endScreen'),
   hud: $('hud'), topbar: $('topbar'), healthBar: $('healthBar'), healthText: $('healthText'), status: $('statusText'),
@@ -12,7 +13,7 @@ const ui = {
 const LEVELS = [
   { title: 'Despertar', objective: 'Recupera la muestra y encuentra la salida', samples: [[-15,-5]], enemies: [[15,-2]], enemyHealth: 1, enemySpeed: .86, timeLimit: 150, theme: 'lab', background: 0x101b18, atmosphere: 0x9df1c7, floor: 0x43544a },
   { title: 'Cultivos inestables', objective: 'Recupera 2 muestras bajo presión', samples: [[-15,-7],[15,-7]], enemies: [[-15,3],[14,-2],[0,-13]], enemyHealth: 2, enemySpeed: 1.06, timeLimit: 135, theme: 'cryo', background: 0x0b1924, atmosphere: 0x77d9ed, floor: 0x294552 },
-  { title: 'Zona de cuarentena', objective: 'Asegura 3 muestras y evita a los infectados', samples: [[-15,-9],[14,-8],[0,1]], enemies: [[-15,3],[14,-2],[0,-13],[15,10],[-15,-12]], enemyHealth: 2, enemySpeed: 1.24, timeLimit: 120, theme: 'quarantine', background: 0x241211, atmosphere: 0xff765f, floor: 0x51312c },
+  { title: 'Zona de cuarentena', objective: 'Asegura 3 muestras y evita a los infectados', samples: [[-15,-9],[14,-8],[0,7]], enemies: [[-15,3],[14,-2],[0,-13],[15,10],[-15,-12]], enemyHealth: 2, enemySpeed: 1.24, timeLimit: 120, theme: 'quarantine', background: 0x241211, atmosphere: 0xff765f, floor: 0x51312c },
   { title: 'Extracción final', objective: 'Recupera 4 muestras, sobrevive y alcanza el elevador', samples: [[-15,-9],[15,-9],[-15,7],[15,7]], enemies: [[-15,3],[14,-2],[0,-13],[15,10],[-15,-12],[7,8],[-7,-3]], enemyHealth: 3, enemySpeed: 1.42, timeLimit: 105, theme: 'reactor', background: 0x0d1b23, atmosphere: 0x8ce8ff, floor: 0x243a48 },
 ];
 const CHARACTERS = [
@@ -274,9 +275,9 @@ function buildLevelScenario(level) {
 }
 
 function createPlayer() {
-  const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0, .98, 11));
+  const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(PLAYER_START[0], .98, PLAYER_START[1]));
   const collider = world.createCollider(RAPIER.ColliderDesc.capsule(.48, .31).setFriction(.1), body);
-  player = { body, collider, target: new THREE.Vector3(0,.98,11), velocity: new THREE.Vector3(), facing: 0, invuln: 0, group: null, fallback: null, avatarLimbs: { arms:[], legs:[] } };
+  player = { body, collider, target: new THREE.Vector3(PLAYER_START[0],.98,PLAYER_START[1]), velocity: new THREE.Vector3(), facing: 0, invuln: 0, group: null, fallback: null, avatarLimbs: { arms:[], legs:[] } };
   playerBody = body; playerCollider = collider;
   buildFallbackAvatar();
   applyCharacterAppearance();
@@ -667,7 +668,7 @@ function setupLevel(index){
   for(const s of samples)scene.remove(s.group);samples.length=0;
   for(const p of [...projectiles])removeProjectile(projectiles.indexOf(p));
   const config=currentLevel();buildLevelScenario(config);scene.background.set(config.background);scene.fog.color.set(config.background);scene.fog.density=config.theme==='cryo'?.027:config.theme==='quarantine'?.03:.021;for(const light of scene.children){if(light.isPointLight)light.color.set(config.atmosphere);}
-  levelTimeRemaining=config.timeLimit;health=100;collected=0;player.invuln=0;player.velocity.set(0,0,0);player.target.set(0,.98,11);player.body.setNextKinematicTranslation({x:0,y:.98,z:11});player.group.position.set(0,0,11);player.group.rotation.set(0,0,0);player.facing=0;
+  levelTimeRemaining=config.timeLimit;health=100;collected=0;player.invuln=0;player.velocity.set(0,0,0);player.target.set(PLAYER_START[0],.98,PLAYER_START[1]);player.body.setNextKinematicTranslation({x:PLAYER_START[0],y:.98,z:PLAYER_START[1]});player.group.position.set(PLAYER_START[0],0,PLAYER_START[1]);player.group.rotation.set(0,0,0);player.facing=0;
   for(const p of props){p.body.setTranslation({x:p.original[0],y:p.original[1],z:p.original[2]},true);p.body.setLinvel({x:0,y:0,z:0},true);p.body.setAngvel({x:0,y:0,z:0},true);const a=p.resetRot||0;p.body.setRotation({x:0,y:Math.sin(a/2),z:0,w:Math.cos(a/2)},true);p.mesh.position.set(p.original[0],p.original[1],p.original[2]);p.mesh.rotation.set(0,a,0);}
   spawnSamples(config.samples);config.enemies.forEach((p,i)=>spawnEnemy(p[0],p[1],i,config));
   exitDoor.open=false;exitDoor.mesh.material.emissive.set(0x5a2118);exitDoor.mesh.material.emissiveIntensity=.75;exitDoor.mesh.material.color.set(0x8ee7c8);
