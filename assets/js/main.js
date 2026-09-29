@@ -39,7 +39,7 @@ const keys = new Set();
 const raycaster = new THREE.Raycaster();
 const up = new THREE.Vector3(0, 1, 0);
 let world, player, playerBody, playerCollider;
-let cameraYaw = 0, cameraPitch = 0.2, cameraDistance = 7.2;
+let cameraYaw = 0, cameraPitch = 0.2, cameraDistance = 8.4;
 let moveYaw = null;
 let initialized = false, state = 'loading', elapsed = 0, levelTimeRemaining = 0, health = 100, collected = 0;
 let power = 13, enemies = [], samples = [], props = [], projectiles = [], particles = [], exitDoor;
@@ -608,7 +608,8 @@ function updateCamera(dt){
   const dir=desired.clone().sub(focus);const length=dir.length();dir.normalize();
   raycaster.set(focus,dir);raycaster.camera=camera;raycaster.far=length;
   const hits=raycaster.intersectObjects(cameraOccluders,false);
-  let target=desired;if(hits.length)target=focus.clone().addScaledVector(dir,Math.max(1.5,hits[0].distance-.25));
+  // Keep a playable third-person distance even when a low obstacle crosses the ray.
+  let target=desired;if(hits.length)target=focus.clone().addScaledVector(dir,Math.min(length,Math.max(6.2,hits[0].distance-.25)));
   camera.position.lerp(target,1-Math.exp(-8*dt));camera.lookAt(focus);
 }
 
@@ -677,7 +678,7 @@ function setupLevel(index){
   for(const p of props){p.body.setTranslation({x:p.original[0],y:p.original[1],z:p.original[2]},true);p.body.setLinvel({x:0,y:0,z:0},true);p.body.setAngvel({x:0,y:0,z:0},true);const a=p.resetRot||0;p.body.setRotation({x:0,y:Math.sin(a/2),z:0,w:Math.cos(a/2)},true);p.mesh.position.set(p.original[0],p.original[1],p.original[2]);p.mesh.rotation.set(0,a,0);}
   spawnSamples(config.samples);config.enemies.forEach((p,i)=>spawnEnemy(p[0],p[1],i,config));
   exitDoor.open=false;exitDoor.mesh.material.emissive.set(0x5a2118);exitDoor.mesh.material.emissiveIntensity=.75;exitDoor.mesh.material.color.set(0x8ee7c8);
-  cameraYaw=0;moveYaw=null;cameraPitch=.2;cameraDistance=7.2;updateHUD();setAnimation('Idle');
+  cameraYaw=0;moveYaw=null;cameraPitch=.2;cameraDistance=8.4;updateHUD();setAnimation('Idle');
 }
 function resetGame(){elapsed=0;setupLevel(0);}
 function continueLevel(){setupLevel(levelIndex+1);state='playing';ui.end.classList.add('hidden');$('continueBtn').classList.add('hidden');showHUD(true);clock.getDelta();}
