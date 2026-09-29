@@ -39,7 +39,7 @@ const keys = new Set();
 const raycaster = new THREE.Raycaster();
 const up = new THREE.Vector3(0, 1, 0);
 let world, player, playerBody, playerCollider;
-let cameraYaw = 0, cameraPitch = 0.2, cameraDistance = 6.6;
+let cameraYaw = 0, cameraPitch = 0.2, cameraDistance = 7.2;
 let moveYaw = null;
 let initialized = false, state = 'loading', elapsed = 0, levelTimeRemaining = 0, health = 100, collected = 0;
 let power = 13, enemies = [], samples = [], props = [], projectiles = [], particles = [], exitDoor;
@@ -481,8 +481,10 @@ function fire() {
   if(state!=='playing'||performance.now()-lastShot<320)return;
   lastShot=performance.now();
   attackAnimTimer=.34;
-  const direction=new THREE.Vector3(Math.sin(cameraYaw)*Math.cos(cameraPitch),Math.sin(cameraPitch),Math.cos(cameraYaw)*Math.cos(cameraPitch)).normalize();
+  const direction=camera.getWorldDirection(new THREE.Vector3());
   const origin=player.group.position.clone().add(new THREE.Vector3(0,1.35,0)).addScaledVector(direction,.68);
+  const aimPoint=camera.position.clone().addScaledVector(direction,40);
+  direction.subVectors(aimPoint,origin).normalize();
   createProjectile(origin,direction);
   player.facing=cameraYaw;player.group.rotation.y=player.facing;playSound('shot');
 }
@@ -596,9 +598,12 @@ function updateEnemies(dt){
 function damagePlayer(amount){if(player.invuln>0)return;player.invuln=.55;health=Math.max(0,health-amount);playSound('hurt');updateHUD();addBurst(player.group.position.clone().add(new THREE.Vector3(0,1,0)),0xf06d54,8);if(health<=0)finish(false,'La integridad del traje llegó a cero.');}
 
 function updateCamera(dt){
-  const focus=player.group.position.clone().add(new THREE.Vector3(0,1.45,0));
+  const forward=new THREE.Vector3(Math.sin(cameraYaw),0,Math.cos(cameraYaw));
+  const actorFocus=player.group.position.clone().add(new THREE.Vector3(0,1.35,0));
+  const focus=actorFocus.clone().addScaledVector(forward,1.85);
   const horizontal=Math.cos(cameraPitch)*cameraDistance;
-  const desired=focus.clone().add(new THREE.Vector3(-Math.sin(cameraYaw)*horizontal,Math.sin(cameraPitch)*cameraDistance+1.15,-Math.cos(cameraYaw)*horizontal));
+  const shoulder=2.2;
+  const desired=actorFocus.clone().add(new THREE.Vector3(-Math.sin(cameraYaw)*horizontal-Math.cos(cameraYaw)*shoulder,Math.sin(cameraPitch)*cameraDistance+1.05,-Math.cos(cameraYaw)*horizontal+Math.sin(cameraYaw)*shoulder));
   // Short raycast keeps camera outside nearby walls.
   const dir=desired.clone().sub(focus);const length=dir.length();dir.normalize();
   raycaster.set(focus,dir);raycaster.camera=camera;raycaster.far=length;
@@ -672,7 +677,7 @@ function setupLevel(index){
   for(const p of props){p.body.setTranslation({x:p.original[0],y:p.original[1],z:p.original[2]},true);p.body.setLinvel({x:0,y:0,z:0},true);p.body.setAngvel({x:0,y:0,z:0},true);const a=p.resetRot||0;p.body.setRotation({x:0,y:Math.sin(a/2),z:0,w:Math.cos(a/2)},true);p.mesh.position.set(p.original[0],p.original[1],p.original[2]);p.mesh.rotation.set(0,a,0);}
   spawnSamples(config.samples);config.enemies.forEach((p,i)=>spawnEnemy(p[0],p[1],i,config));
   exitDoor.open=false;exitDoor.mesh.material.emissive.set(0x5a2118);exitDoor.mesh.material.emissiveIntensity=.75;exitDoor.mesh.material.color.set(0x8ee7c8);
-  cameraYaw=0;moveYaw=null;cameraPitch=.2;cameraDistance=6.6;updateHUD();setAnimation('Idle');
+  cameraYaw=0;moveYaw=null;cameraPitch=.2;cameraDistance=7.2;updateHUD();setAnimation('Idle');
 }
 function resetGame(){elapsed=0;setupLevel(0);}
 function continueLevel(){setupLevel(levelIndex+1);state='playing';ui.end.classList.add('hidden');$('continueBtn').classList.add('hidden');showHUD(true);clock.getDelta();}
