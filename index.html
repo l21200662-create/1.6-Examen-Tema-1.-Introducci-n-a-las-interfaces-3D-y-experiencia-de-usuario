@@ -41,20 +41,20 @@
       </div>
       <div class="hud-right">
         <div class="panel threat-panel"><span class="eyebrow">AMENAZAS ACTIVAS</span><div class="threat-count"><b id="enemyCount">03</b><span>HOSTILES</span><span class="threat-bars"><i></i><i></i><i></i></span></div></div>
-        <div class="panel timer-panel"><span class="eyebrow">TIEMPO TRANSCURRIDO</span><div class="timer mono" id="timer">00:00</div></div>
+        <div class="panel timer-panel"><span class="eyebrow">TIEMPO RESTANTE</span><div class="timer mono" id="timer">02:30</div></div>
       </div>
       <div class="bottom-center"><div class="crosshair" id="crosshair"><i></i><i></i><i></i><i></i><b></b></div><div class="toast" id="toast" aria-live="assertive"></div></div>
       <div class="weapon-panel panel"><div class="weapon-icon"><span></span></div><div class="weapon-info"><div class="eyebrow">DISPOSITIVO DE CONTENCIÓN</div><b>IMPULSOR IÓNICO <span class="weapon-ready">● LISTO</span></b></div><label class="power-setting"><span>POTENCIA</span><input id="power" type="range" min="7" max="19" value="13" aria-label="Potencia del impulsor"><b id="powerValue">13</b></label><span class="ammo mono" id="ammo">∞</span></div>
       <div class="interact-hint" id="interactHint"><kbd>E</kbd><span>EXTRAER MUESTRA</span></div>
-      <div class="controls-pill"><span><kbd>WASD</kbd> MOVER</span><span><kbd>SHIFT</kbd> CORRER</span><span><kbd>CLICK</kbd> IMPULSO</span><span><kbd>R</kbd> INTERACTUAR</span></div>
+      <div class="controls-pill"><span><kbd>W</kbd> ADELANTE</span><span><kbd>A</kbd> DERECHA</span><span><kbd>D</kbd> IZQUIERDA</span><span><kbd>S</kbd> ATRÁS</span><span><kbd>SHIFT</kbd> CORRER</span><span><kbd>F / CLICK</kbd> DISPARAR</span><span><kbd>E / R</kbd> MUESTRA</span></div>
     </section>
 
     <section class="overlay visible" id="startScreen">
       <div class="overlay-content start-content">
         <div class="kicker"><span></span>ARCHIVO CLASIFICADO <span class="mono">/ 04—17</span></div>
         <div class="title-lockup"><div class="title-overline">ESTACIÓN BIOLÓGICA · SECTOR 04</div><h1>PROTOCOLO<br><span>CERO</span></h1><div class="title-index">P<span>0</span></div></div>
-        <p class="story">El sistema de contención ha fallado.<br><strong>Recupera las muestras de cada nivel y alcanza la salida.</strong></p>
-        <div class="briefing-grid"><div><span class="brief-number">01</span><span><b>RECUPERA</b><small>Muestras de cultivo</small></span></div><div><span class="brief-number">02</span><span><b>CONTÉN</b><small>Impulsa a los hostiles</small></span></div><div><span class="brief-number">03</span><span><b>SUPERA</b><small>4 niveles progresivos</small></span></div></div>
+        <p class="story">El sistema de contención ha fallado.<br><strong>Cada nivel cambia el escenario. Recupera las muestras y escapa antes de que se agote el tiempo.</strong></p>
+        <div class="briefing-grid"><div><span class="brief-number">01</span><span><b>RECUPERA</b><small>Muestras de cultivo</small></span></div><div><span class="brief-number">02</span><span><b>CONTÉN</b><small>Impulsa a los hostiles</small></span></div><div><span class="brief-number">03</span><span><b>SUPERA</b><small>4 escenarios progresivos</small></span></div></div>
         <div class="character-picker" aria-label="Selección de personaje">
           <button class="character-arrow" id="characterPrev" aria-label="Personaje anterior">‹</button>
           <div class="character-portrait" id="characterPortrait"><span id="characterInitial">07</span><i></i></div>
@@ -62,8 +62,8 @@
           <div class="character-dots" id="characterDots" aria-hidden="true"><i class="selected"></i><i></i><i></i></div>
           <button class="character-arrow" id="characterNext" aria-label="Siguiente personaje">›</button>
         </div>
-        <div class="start-row"><button class="primary-button" id="startBtn"><span>INICIAR MISIÓN</span><b>↗</b></button><div class="start-note"><span class="key-cluster"><kbd>W</kbd><span><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span></span><span>MOVERSE<br><small>ARRASTRA · CÁMARA</small></span></div></div>
-        <div class="footer-note"><span>PROTOCOLO DE EMERGENCIA ACTIVO</span><span class="mono">v1.0.0 <i>●</i> SISTEMA EN LÍNEA</span></div>
+        <div class="start-row"><button class="primary-button" id="startBtn"><span>INICIAR MISIÓN</span><b>↗</b></button><div class="start-note"><span class="key-cluster"><kbd>W</kbd><span><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span></span><span>W ADELANTE · A DERECHA<br>D IZQUIERDA · S ATRÁS<br><small>SHIFT CORRER · ARRASTRA PARA MOVER CÁMARA</small></span></div></div>
+        <div class="footer-note"><span>PROTOCOLO DE EMERGENCIA ACTIVO</span><span class="mono">v1.1.0 <i>●</i> SISTEMA EN LÍNEA</span></div>
       </div>
       <div class="side-label mono">ESTACIÓN BIOLÓGICA &nbsp;—&nbsp; 2049</div>
     </section>

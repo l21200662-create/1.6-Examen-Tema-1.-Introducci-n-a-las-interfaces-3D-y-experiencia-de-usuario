@@ -8,33 +8,33 @@
 
 ## Descripción
 
-Videojuego web 3D en tercera persona ambientado en un laboratorio de contención. El sistema de bioseguridad ha fallado. El jugador debe recuperar muestras, enfrentar o evitar a los sujetos infectados y llegar al elevador de extracción.
+Videojuego web 3D en tercera persona ambientado en un laboratorio de contención. El sistema de bioseguridad ha fallado. El jugador debe recuperar muestras, enfrentar o evitar a los sujetos infectados y llegar al elevador de extracción. Cada fase transcurre en un escenario distinto, con obstáculos y amenazas más difíciles.
 
-La partida contiene **cuatro niveles progresivos**. Cada nivel tiene su propio objetivo, número de muestras y cantidad/dificultad de enemigos. Al llegar al elevador con las muestras requeridas se habilita el botón para continuar. La misión se completa al superar el nivel 4; si la integridad del traje llega a cero, se pierde la partida.
+La partida contiene **cuatro niveles progresivos**, cada uno con su propio escenario, límite de tiempo, cantidad de muestras, obstáculos y enemigos. Completa el objetivo y llega al elevador antes de que termine el tiempo. La misión se completa al superar el nivel 4; si la integridad del traje llega a cero o se agota el tiempo, se pierde la partida.
 
 ## Personajes
 
-Antes de iniciar, usa las flechas del selector para elegir entre tres operadores: **EVA-07**, **GUARDIA-12** y **BIO-03**. Cada uno tiene uniforme y colores propios. Desde el menú de pausa puedes volver a la selección; hacerlo reinicia la misión.
+Antes de iniciar, usa las flechas del selector para elegir entre tres operadores: **EVA-07**, **GUARDIA-12** y **BIO-03**. Cada uno tiene uniforme, silueta y equipo propios. Desde el menú de pausa puedes volver a la selección; hacerlo reinicia la misión.
 
 ## Cómo jugar
 
-1. Pulsa **Iniciar misión**.
-2. Muévete con **W/A/S/D**. Mantén **Shift** para correr.
-3. Arrastra el mouse sobre la escena para orientar la cámara; usa la rueda para ajustar la distancia.
+1. Pulsa **Iniciar misión**. Los efectos de sonido se activan al comenzar.
+2. Usa **W** para avanzar, **S** para retroceder, **A** para moverte a la derecha y **D** para moverte a la izquierda. Mantén **Shift** para correr.
+3. Arrastra el mouse sobre la escena para orientar la cámara; mientras avanzas, la cámara acompaña el rumbo del personaje. Usa la rueda para ajustar la distancia.
 4. Acércate a las muestras y pulsa **E** o **R** para recuperarlas.
 5. Haz clic o pulsa **F** para disparar el impulsor. El deslizador **Potencia** modifica la fuerza del disparo.
-6. Cuando hayas recogido las muestras requeridas, llega al elevador para completar el nivel y pulsa **Continuar al nivel siguiente**.
-7. Evita a los sujetos infectados. Sus ataques reducen la integridad del traje; si llega a cero, la misión termina.
+6. Completa el objetivo antes del límite de tiempo, después llega al elevador y pulsa **Continuar al nivel siguiente**.
+7. Los infectados persiguen al personaje. Sus ataques y las zonas de riesgo reducen la integridad del traje.
 8. Pulsa **Esc** para pausar o reanudar. Desde la pausa puedes reiniciar el nivel o cambiar de personaje.
 
 ## Niveles
 
 | Nivel | Misión | Desafío |
 | --- | --- | --- |
-| 1. Despertar | Recuperar la primera muestra y alcanzar la salida | Un enemigo y una muestra |
-| 2. Cultivos inestables | Recuperar dos muestras | Dos enemigos con más resistencia |
-| 3. Zona de cuarentena | Asegurar tres muestras | Tres enemigos más rápidos |
-| 4. Extracción final | Recuperar las muestras y escapar | Cuatro enemigos, más resistentes y veloces |
+| 1. Despertar | Recuperar una muestra y alcanzar la salida | Laboratorio inicial · 1 infectado · 2:30 minutos |
+| 2. Cultivos inestables | Recuperar dos muestras | Cámara criogénica con depósitos y barricadas · 3 infectados · 2:15 minutos |
+| 3. Zona de cuarentena | Asegurar tres muestras | Recinto de cuarentena con barreras y zonas contaminadas · 5 infectados · 2:00 minutos |
+| 4. Extracción final | Recuperar cuatro muestras y escapar | Cámara del reactor con obstáculos y fugas térmicas · 7 infectados · 1:45 minutos |
 
 ## Organización del proyecto
 
@@ -44,8 +44,8 @@ Antes de iniciar, usa las flechas del selector para elegir entre tres operadores
 
 ## Tecnologías
 
-- **Three.js** renderiza el escenario, los personajes, la cámara, la iluminación y los efectos.
-- **GLTFLoader** carga el modelo animado RobotExpressive. **AnimationMixer** administra los estados Idle, Walk, Run y Attack; hay un avatar geométrico de respaldo si no se puede cargar el GLB.
+- **Three.js** renderiza los escenarios, los personajes procedurales, la cámara, la iluminación y los efectos.
+- La animación de pasos, carrera y disparo se genera en el juego. Los efectos de sonido se sintetizan con Web Audio.
 - **Rapier 3D** proporciona gravedad, colisionadores y cuerpos rígidos dinámicos para las cajas, tambores, viales y proyectiles.
 - HTML, CSS y JavaScript conforman la interfaz web. Se usan módulos y rutas relativas compatibles con GitHub Pages.
 
@@ -65,16 +65,15 @@ Después abre `http://localhost:8000`.
 
 ## Publicar en GitHub Pages
 
-1. Sube esta carpeta a un repositorio público de GitHub y conserva los commits para mantener el historial de versiones.
-2. En **Settings → Pages**, selecciona **Deploy from a branch**, la rama `main` y la carpeta `/ (root)`.
-3. Espera a que GitHub Pages termine la publicación y abre la URL del sitio.
+1. Sube los cambios a la rama `main` de GitHub.
+2. El flujo `.github/workflows/publicar-juego.yml` publica automáticamente `index.html` y `assets/` en GitHub Pages.
+3. Abre la URL de GitHub Pages del repositorio.
 
-Three.js, Rapier, las fuentes y el modelo del personaje se descargan desde CDN, por lo que necesitan conexión a Internet.
+Three.js y Rapier se descargan desde CDN, por lo que necesitan conexión a Internet. Los personajes, enemigos, escenarios y sonidos se generan dentro del juego.
 
 ## Recursos y atribuciones
 
-- RobotExpressive, Khronos Group, [modelo GLB y animaciones](https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb), distribuido con los ejemplos de Three.js. Consultar el recurso de origen para su atribución/licencia.
 - Three.js, [licencia MIT](https://github.com/mrdoob/three.js/blob/dev/LICENSE).
 - Rapier, [licencia Apache-2.0](https://github.com/dimforge/rapier.js/blob/master/LICENSE).
 - Barlow Condensed, DM Mono y Manrope, Google Fonts, bajo las licencias OFL de sus familias.
-- El escenario, el HUD, los operadores de respaldo y los enemigos se generan mediante código para este proyecto.
+- Los escenarios, el HUD, los operadores y los enemigos se generan mediante código para este proyecto.
