@@ -292,7 +292,7 @@ function buildLevelScenario(level) {
 function createPlayer() {
   const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(PLAYER_START[0], .98, PLAYER_START[1]));
   const collider = world.createCollider(RAPIER.ColliderDesc.capsule(.48, .31).setFriction(.1), body);
-  player = { body, collider, target: new THREE.Vector3(PLAYER_START[0],.98,PLAYER_START[1]), velocity: new THREE.Vector3(), facing: 0, invuln: 0, group: null, fallback: null, avatarLimbs: { arms:[], legs:[] }, animationMixer: null, avatarActions: {}, activeAvatarAction: null };
+  player = { body, collider, target: new THREE.Vector3(PLAYER_START[0],.98,PLAYER_START[1]), velocity: new THREE.Vector3(), facing: 0, invuln: 0, group: null, fallback: null, avatarLimbs: { arms:[], legs:[] }, avatarMotionBones: {}, appliedAvatarOffsets: [], animationMixer: null, avatarActions: {}, activeAvatarAction: null };
   playerBody = body; playerCollider = collider;
   buildFallbackAvatar();
 }
@@ -335,7 +335,7 @@ function loadCharacterAsset(profile){
 }
 
 function mapClipsToAvatar(avatarRoot,clips){
-  const cleanName=name=>name.replace(/[^a-z0-9]/gi,'').toLowerCase(),nodes=new Map();
+  const cleanName=name=>name.replace(/^mixamorig\d*/i,'mixamorig').replace(/[^a-z0-9]/gi,'').toLowerCase(),nodes=new Map();
   avatarRoot.traverse(node=>{if(node.name){node.name=node.name.replaceAll(':','');const key=cleanName(node.name);if(key&&!nodes.has(key))nodes.set(key,node);}});
   return Object.fromEntries(Object.entries(clips).map(([name,source])=>{
     const clip=source.clone();clip.tracks=clip.tracks.filter(track=>{
@@ -367,6 +367,8 @@ async function loadSelectedAvatar(profile){
     if(player.fallbackMats)Object.values(player.fallbackMats).forEach(material=>material.dispose());
     if(player.fallback)player.group.remove(player.fallback);
     player.fallback=null;player.fallbackMats=null;player.avatarLimbs={arms:[],legs:[]};player.group.add(holder);player.avatarModel=holder;
+    const bones={};holder.traverse(node=>{if(node.isBone){const key=node.name.replace(/^mixamorig\d*/i,'mixamorig').replace(/^mixamorig/i,'').replace(/[^a-z0-9]/gi,'').toLowerCase();if(key&&!bones[key])bones[key]=node;}});
+    player.avatarMotionBones={leftUpLeg:bones.leftupleg,rightUpLeg:bones.rightupleg,leftLeg:bones.leftleg,rightLeg:bones.rightleg,leftArm:bones.leftarm,rightArm:bones.rightarm,spine:bones.spine};player.appliedAvatarOffsets=[];
     player.animationMixer=new THREE.AnimationMixer(holder);player.avatarActions={};player.activeAvatarAction=null;
     for(const name of ['Idle','Walk','Run','Attack'])if(mappedClips[name]?.tracks.length)player.avatarActions[name]=player.animationMixer.clipAction(mappedClips[name]);
     player.avatarActions.Attack?.setEffectiveTimeScale(5).setLoop(THREE.LoopOnce,1);
@@ -390,6 +392,7 @@ function buildFallbackAvatar() {
   }
   const group = new THREE.Group(); group.position.set(player.target.x,0,player.target.z); scene.add(group); player.group = group;
   const root = new THREE.Group(); group.add(root); player.fallback = root;
+  player.avatarMotionBones={};player.appliedAvatarOffsets=[];
   const profile=CHARACTERS[characterIndex],suit=mats.playerSuit.clone(),accent=mats.acid.clone(),dark=mats.darkMetal.clone(),visorMat=mats.visor.clone(),metal=mats.metal.clone();
   suit.color.set(profile.suit);accent.color.set(profile.accent);accent.emissive.set(profile.accent);dark.color.set(profile.dark);visorMat.color.set(profile.visor);
   player.fallbackMats={suit,accent,dark,visor:visorMat};
@@ -855,7 +858,26 @@ function updateGame(dt){
   // Extraction only succeeds on entry after all samples have been collected.
   if(collected===currentLevel().samples.length&&player.group.position.z>14.2&&Math.abs(player.group.position.x)<6.4)completeLevel();
 }
-function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);if(state==='playing')updateGame(dt);else{updateCamera(dt);updateSampleVisuals(clock.elapsedTime);}player?.animationMixer?.update(dt);renderer.render(scene,camera);}
+function clearAvatarMotionOffsets(){
+  for(const {bone,rotation} of player?.appliedAvatarOffsets||[])bone.quaternion.multiply(rotation.clone().invert());
+  if(player)player.appliedAvatarOffsets=[];
+}
+function applyAvatarLocomotion(){
+  if(!player?.avatarMotionBones)return;
+  const moving=state==='playing'&&playerSpeed>.12;
+  const running=animState==='Run',stride=elapsed*(running?13:8);
+  const strength=moving?THREE.MathUtils.clamp(playerSpeed/(running?6.4:3.35),0,1):0;
+  const attack=attackAnimTimer>0?0.45:1;
+  const bones=player.avatarMotionBones;
+  const offset=(bone,x)=>{if(!bone||Math.abs(x)<.001)return;const rotation=new THREE.Quaternion().setFromEuler(new THREE.Euler(x,0,0));bone.quaternion.multiply(rotation);player.appliedAvatarOffsets.push({bone,rotation});};
+  const swing=Math.sin(stride)*(running?0.2:0.15)*strength*attack;
+  offset(bones.leftUpLeg,swing);offset(bones.rightUpLeg,-swing);
+  offset(bones.leftLeg,Math.max(0,Math.sin(stride+Math.PI/2))*(running?0.13:0.08)*strength);
+  offset(bones.rightLeg,Math.max(0,Math.sin(stride-Math.PI/2))*(running?0.13:0.08)*strength);
+  offset(bones.leftArm,-swing*.62);offset(bones.rightArm,swing*.48*attack);
+  offset(bones.spine,Math.sin(stride*2)*.018*strength);
+}
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);if(state==='playing')updateGame(dt);else{updateCamera(dt);updateSampleVisuals(clock.elapsedTime);}clearAvatarMotionOffsets();player?.animationMixer?.update(dt);applyAvatarLocomotion();renderer.render(scene,camera);}
 
 async function init(){
   try{

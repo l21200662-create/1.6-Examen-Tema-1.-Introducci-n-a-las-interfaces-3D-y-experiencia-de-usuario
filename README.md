@@ -14,7 +14,7 @@ La partida contiene **cuatro niveles progresivos**, cada uno con su propio escen
 
 ## Personajes
 
-Antes de iniciar, usa las flechas del selector para elegir entre **Abuela Deportiva**, **Sujeto CH-17** y **BIO-03**. Abuela Deportiva usa `Sporty Granny (1).fbx` y CH-17 usa `Ch17_nonPBR.fbx`; ambos cargan los clips de espera, caminar, correr y lanzamiento. Los modelos se descargan al elegirlos. BIO-03 conserva su modelo del juego. Desde el menú de pausa puedes volver a la selección; hacerlo reinicia la misión.
+La partida inicia con **Abuela Deportiva** (`Sporty Granny (1).fbx`) y espera a que el modelo esté listo antes de mostrar el menú. En el selector puedes elegir también a **Sujeto CH-17** (`Ch17_nonPBR.fbx`) o **BIO-03**. La abuela y CH-17 usan animaciones de espera, caminar, correr y lanzamiento, con movimiento complementario de extremidades. Desde el menú de pausa puedes volver a la selección; hacerlo reinicia la misión.
 
 ## Cómo jugar
 
