@@ -22,10 +22,12 @@
     <header class="topbar hud-hidden" id="topbar">
       <a class="brand" href="#" aria-label="Protocolo Cero"><span class="brand-mark">P<span>0</span></span><span class="brand-name">PROTOCOL<span>ZERO</span></span></a>
       <div class="mission-chip"><i></i><span>SECTOR 04 <b>/</b> CONTENCIÓN · <span id="levelBadge">NIVEL 01 / 04</span></span></div>
+      <button class="music-button" id="musicToggle" aria-label="Silenciar música" title="Silenciar música">♫</button>
       <button class="icon-button" id="pauseBtn" aria-label="Pausar partida" title="Pausar (Esc)"><span class="pause-icon">Ⅱ</span></button>
     </header>
 
     <section class="hud hud-hidden" id="hud" aria-live="polite">
+      <div class="elevator-guide" id="elevatorGuide" aria-live="polite"><span class="elevator-arrow" id="elevatorArrow">↑</span><span id="elevatorText">ELEVADOR BLOQUEADO</span></div>
       <div class="hud-left">
         <div class="panel objective-panel">
           <div class="eyebrow"><span class="live-dot"></span>OBJETIVO ACTUAL <span class="mono" id="objectiveStep">01 / 03</span></div>
@@ -62,8 +64,8 @@
           <div class="character-dots" id="characterDots" aria-hidden="true"><i class="selected"></i><i></i><i></i></div>
           <button class="character-arrow" id="characterNext" aria-label="Siguiente personaje">›</button>
         </div>
-        <div class="start-row"><button class="primary-button" id="startBtn"><span>INICIAR MISIÓN</span><b>↗</b></button><div class="start-note"><span class="key-cluster"><kbd>W</kbd><span><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span></span><span>W ADELANTE · A DERECHA<br>D IZQUIERDA · S ATRÁS<br><small>SHIFT CORRER · ARRASTRA PARA MOVER CÁMARA</small></span></div></div>
-        <div class="footer-note"><span>PROTOCOLO DE EMERGENCIA ACTIVO</span><span class="mono">v1.1.1 <i>●</i> SISTEMA EN LÍNEA</span></div>
+        <div class="start-row"><button class="primary-button" id="startBtn"><span>INICIAR MISIÓN</span><b>↗</b></button><div class="start-note"><span class="key-cluster"><kbd>W</kbd><span><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span></span><span>W ADELANTE · A DERECHA<br>D IZQUIERDA · S ATRÁS<br><small>SHIFT CORRER · MOUSE PARA GIRAR CÁMARA</small></span></div></div>
+        <div class="footer-note"><span>PROTOCOLO DE EMERGENCIA ACTIVO</span><span class="mono">v1.2.0 <i>●</i> SISTEMA EN LÍNEA</span></div>
       </div>
       <div class="side-label mono">ESTACIÓN BIOLÓGICA &nbsp;—&nbsp; 2049</div>
     </section>
@@ -83,7 +85,7 @@
     if (location.protocol === 'file:') {
       showStartupError('Abre "abrir-juego.bat" para iniciar el juego. No abras index.html directamente.');
     } else {
-      import('./assets/js/main.js?v=1.1.1').catch((cause) => {
+      import('./assets/js/main.js?v=1.2.0').catch((cause) => {
         console.error(cause);
         showStartupError('No se pudo cargar el juego. Comprueba tu conexión a Internet y vuelve a intentarlo.');
       });

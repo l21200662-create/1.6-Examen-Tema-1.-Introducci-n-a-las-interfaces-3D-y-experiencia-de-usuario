@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+import { clone as cloneSkinnedModel } from 'three/addons/utils/SkeletonUtils.js';
 import RAPIER from '@dimforge/rapier3d-compat';
 
 const $ = (id) => document.getElementById(id);
@@ -9,6 +12,7 @@ const ui = {
   timer: $('timer'), enemyCount: $('enemyCount'), objective: $('objectiveTitle'), objectiveSub: $('objectiveSub'),
   objectiveStep: $('objectiveStep'), sampleProgress: $('sampleProgress'), hint: $('interactHint'), toast: $('toast'),
   power: $('power'), powerValue: $('powerValue'), crosshair: $('crosshair'), error: $('errorToast'), levelBadge: $('levelBadge'),
+  elevatorGuide: $('elevatorGuide'), elevatorArrow: $('elevatorArrow'), elevatorText: $('elevatorText'), musicToggle: $('musicToggle'),
 };
 const LEVELS = [
   { title: 'Despertar', objective: 'Recupera la muestra y encuentra la salida', samples: [[-15,-5]], enemies: [[15,-2]], enemyHealth: 1, enemySpeed: .86, timeLimit: 150, theme: 'lab', background: 0x101b18, atmosphere: 0x9df1c7, floor: 0x43544a },
@@ -17,8 +21,8 @@ const LEVELS = [
   { title: 'Extracción final', objective: 'Recupera 4 muestras, sobrevive y alcanza el elevador', samples: [[-15,-9],[15,-9],[-15,7],[15,7]], enemies: [[-15,3],[14,-2],[0,-13],[15,10],[-15,-12],[7,8],[-7,-3]], enemyHealth: 3, enemySpeed: 1.42, timeLimit: 105, theme: 'reactor', background: 0x0d1b23, atmosphere: 0x8ce8ff, floor: 0x243a48 },
 ];
 const CHARACTERS = [
-  { name: 'EVA-07', role: 'Especialista de contención', initial: '07', suit: '#d8d8c5', accent: '#c8ee68', dark: '#28352f', visor: '#243b3c', silhouette: 'scout' },
-  { name: 'GUARDIA-12', role: 'Seguridad de la estación', initial: '12', suit: '#8ea4ba', accent: '#f3a25d', dark: '#263647', visor: '#1e3345', silhouette: 'guard' },
+  { name: 'ABUELA DEPORTIVA', role: 'Operadora veterana · ágil y resistente', initial: 'AG', suit: '#d8d8c5', accent: '#c8ee68', dark: '#28352f', visor: '#243b3c', silhouette: 'scout', model: './assets/characters/Sporty Granny.gltf', format: 'gltf' },
+  { name: 'SUJETO CH-17', role: 'Unidad de prueba · traje de contención', initial: '17', suit: '#8ea4ba', accent: '#f3a25d', dark: '#263647', visor: '#1e3345', silhouette: 'guard', model: './assets/characters/Ch17_nonPBR.fbx', format: 'fbx' },
   { name: 'BIO-03', role: 'Técnica de laboratorio', initial: '03', suit: '#92c8b6', accent: '#ff8e9b', dark: '#29433f', visor: '#213e42', silhouette: 'scientist' },
 ];
 const scene = new THREE.Scene();
@@ -51,7 +55,11 @@ let levelScene = null;
 const levelBodies = [], levelSolids = [], levelOccluders = [], levelHazards = [];
 const levelOwnedResources = [];
 let pointerLocked = false, mouseDragging = false, dragCameraMoved = false, lastMouseX = 0, lastMouseY = 0, messageTimer = 0;
-let audioContext = null, lastFootstep = 0;
+let audioContext = null, lastFootstep = 0, musicEnabled = true, musicMaster = null, musicTimer = null;
+const gltfLoader = new GLTFLoader();
+const fbxLoader = new FBXLoader();
+const characterAssetCache = new Map();
+let animationLibraryPromise = null, avatarLoadRevision = 0;
 
 const mats = {};
 function mat(name, color, roughness = .8, metalness = 0, extra = {}) {
@@ -163,6 +171,13 @@ function buildRoom() {
   door.material = mats.glass.clone(); door.material.emissive = new THREE.Color(0x5a2118); door.material.emissiveIntensity = .75;
   for (let x of [-6.1,6.1]) addBoxVisual(exitGroup,x,2.08,.28,.08,3.8,.12,mats.acid);
   exitDoor = { group: exitGroup, mesh: door, open: false };
+  const signCanvas=document.createElement('canvas');signCanvas.width=768;signCanvas.height=144;
+  const signContext=signCanvas.getContext('2d');signContext.fillStyle='#101b16';signContext.fillRect(0,0,768,144);signContext.strokeStyle='#c8ee68';signContext.lineWidth=5;signContext.strokeRect(8,8,752,128);
+  signContext.fillStyle='#d9f38b';signContext.font='700 66px Arial';signContext.fillText('↑  ELEVADOR',34,82);signContext.fillStyle='#9bb39e';signContext.font='24px monospace';signContext.fillText('EXTRACCIÓN · SECTOR 04',38,119);
+  const signTexture=new THREE.CanvasTexture(signCanvas);signTexture.colorSpace=THREE.SRGBColorSpace;
+  const sign=new THREE.Mesh(new THREE.PlaneGeometry(4.7,.88),new THREE.MeshBasicMaterial({map:signTexture,side:THREE.DoubleSide,toneMapped:false}));sign.position.set(0,4.1,15.28);scene.add(sign);
+  const arrowShape=new THREE.Shape();arrowShape.moveTo(0,-.36);arrowShape.lineTo(-.32,.12);arrowShape.lineTo(-.13,.12);arrowShape.lineTo(-.13,.34);arrowShape.lineTo(.13,.34);arrowShape.lineTo(.13,.12);arrowShape.lineTo(.32,.12);arrowShape.closePath();
+  for(let z=9.1;z<=13.7;z+=1.15){const arrow=new THREE.Mesh(new THREE.ShapeGeometry(arrowShape),new THREE.MeshBasicMaterial({color:0xc8ee68,transparent:true,opacity:.76,side:THREE.DoubleSide,depthWrite:false}));arrow.rotation.x=-Math.PI/2;arrow.position.set(0,.035,z);scene.add(arrow);}
   // Extraction floor chevrons.
   for (let i=-3;i<=3;i++) { const line=addBoxVisual(scene,i*1.3,.025,12.8,.82,.018,.055,mats.acid,{cast:false}); line.rotation.y=.45; }
   // Work islands / partitions, each with static collision.
@@ -277,10 +292,9 @@ function buildLevelScenario(level) {
 function createPlayer() {
   const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(PLAYER_START[0], .98, PLAYER_START[1]));
   const collider = world.createCollider(RAPIER.ColliderDesc.capsule(.48, .31).setFriction(.1), body);
-  player = { body, collider, target: new THREE.Vector3(PLAYER_START[0],.98,PLAYER_START[1]), velocity: new THREE.Vector3(), facing: 0, invuln: 0, group: null, fallback: null, avatarLimbs: { arms:[], legs:[] } };
+  player = { body, collider, target: new THREE.Vector3(PLAYER_START[0],.98,PLAYER_START[1]), velocity: new THREE.Vector3(), facing: 0, invuln: 0, group: null, fallback: null, avatarLimbs: { arms:[], legs:[] }, animationMixer: null, avatarActions: {}, activeAvatarAction: null };
   playerBody = body; playerCollider = collider;
   buildFallbackAvatar();
-  applyCharacterAppearance();
 }
 function applyCharacterAppearance() {
   const profile=CHARACTERS[characterIndex];
@@ -290,8 +304,66 @@ function applyCharacterAppearance() {
   if($('characterName'))$('characterName').textContent=profile.name;
   if($('characterRole'))$('characterRole').textContent=profile.role;
   $('characterDots')?.querySelectorAll('i').forEach((dot,i)=>dot.classList.toggle('selected',i===characterIndex));
-  if(player?.fallbackMats){player.fallbackMats.suit.color.set(profile.suit);player.fallbackMats.accent.color.set(profile.accent);player.fallbackMats.accent.emissive.set(profile.accent);player.fallbackMats.dark.color.set(profile.dark);player.fallbackMats.visor.color.set(profile.visor);}
+  if(player?.group){
+    avatarLoadRevision++;player.animationMixer?.stopAllAction();player.animationMixer=null;player.avatarActions={};player.activeAvatarAction=null;
+    buildFallbackAvatar();
+    if(player.fallbackMats){player.fallbackMats.suit.color.set(profile.suit);player.fallbackMats.accent.color.set(profile.accent);player.fallbackMats.accent.emissive.set(profile.accent);player.fallbackMats.dark.color.set(profile.dark);player.fallbackMats.visor.color.set(profile.visor);}
+    if(profile.model){if($('characterRole'))$('characterRole').textContent=`${profile.role} · CARGANDO MODELO`;loadSelectedAvatar(profile);}
+  }
 }
+
+function loadAnimationLibrary(){
+  if(!animationLibraryPromise){
+    const files={Idle:'Standing Idle.gltf',Walk:'Walking.gltf',Run:'Running.gltf',Attack:'Throwing.gltf'};
+    animationLibraryPromise=Promise.all(Object.entries(files).map(async([name,file])=>{
+      const asset=await gltfLoader.loadAsync(`./assets/characters/${encodeURIComponent(file)}`);
+      const clip=asset.animations[0]?.clone();
+      if(clip){clip.name=name;clip.tracks=clip.tracks.filter(track=>!(track.name.startsWith('mixamorig:Hips.')&&track.name.endsWith('.position')));}
+      return[name,clip];
+    })).then(entries=>Object.fromEntries(entries.filter(([,clip])=>clip)));
+  }
+  return animationLibraryPromise;
+}
+
+function loadCharacterAsset(profile){
+  if(!characterAssetCache.has(profile.model)){
+    const task=(profile.format==='fbx'?fbxLoader.loadAsync(profile.model):gltfLoader.loadAsync(profile.model)).then(async asset=>({root:profile.format==='fbx'?asset:asset.scene,clips:await loadAnimationLibrary()}));
+    characterAssetCache.set(profile.model,task);
+  }
+  return characterAssetCache.get(profile.model);
+}
+
+async function loadSelectedAvatar(profile){
+  const revision=++avatarLoadRevision;
+  try{
+    const asset=await loadCharacterAsset(profile);
+    if(revision!==avatarLoadRevision||profile!==CHARACTERS[characterIndex])return;
+    const model=cloneSkinnedModel(asset.root);model.updateMatrixWorld(true);
+    const holder=new THREE.Group();holder.add(model);holder.updateMatrixWorld(true);
+    const bounds=new THREE.Box3().setFromObject(holder),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
+    if(!Number.isFinite(size.y)||size.y<.1)throw new Error('El modelo no tiene una altura válida.');
+    const scale=1.86/size.y;holder.scale.setScalar(scale);holder.position.set(-center.x*scale,-bounds.min.y*scale,-center.z*scale);
+    holder.traverse(node=>{if(node.isMesh){node.castShadow=true;node.receiveShadow=true;node.frustumCulled=false;}});
+    player.animationMixer?.stopAllAction();
+    player.fallback?.traverse(node=>{if(node.isMesh)node.geometry.dispose();});
+    if(player.fallbackMats)Object.values(player.fallbackMats).forEach(material=>material.dispose());
+    if(player.fallback)player.group.remove(player.fallback);
+    player.fallback=null;player.fallbackMats=null;player.avatarLimbs={arms:[],legs:[]};player.group.add(holder);player.avatarModel=holder;
+    player.animationMixer=new THREE.AnimationMixer(holder);player.avatarActions={};player.activeAvatarAction=null;
+    for(const name of ['Idle','Walk','Run','Attack'])if(asset.clips[name])player.avatarActions[name]=player.animationMixer.clipAction(asset.clips[name]);
+    player.avatarActions.Attack?.setEffectiveTimeScale(5).setLoop(THREE.LoopOnce,1);
+    attachIonEmitter(model);if($('characterRole'))$('characterRole').textContent=profile.role;setAnimation(animState==='loading'?'Idle':animState);
+  }catch(error){if(revision===avatarLoadRevision){if($('characterRole'))$('characterRole').textContent=`${profile.role} · PERSONAJE DE RESPALDO`;console.warn(`No se pudo cargar ${profile.name}; se conserva el personaje de respaldo.`,error);}}
+}
+
+function attachIonEmitter(model){
+  const hand=model.getObjectByName('mixamorig:RightHand')||model.getObjectByName('RightHand');
+  if(!hand)return;
+  const emitter=new THREE.Group();emitter.position.set(0,.015,.035);emitter.rotation.x=-.12;hand.add(emitter);
+  addBoxVisual(emitter,0,0,.12,.11,.1,.33,mats.darkMetal);
+  addBoxVisual(emitter,0,0,.3,.075,.075,.08,mats.acid,{cast:false});
+}
+
 function buildFallbackAvatar() {
   if (player.group) {
     player.fallback?.traverse(node => { if (node.isMesh) node.geometry.dispose(); });
@@ -453,6 +525,27 @@ function playSound(kind) {
     osc.connect(gain);gain.connect(audioContext.destination);osc.start(now);osc.stop(now+sound.duration+.02);
   } catch { /* Sound stays optional when a browser blocks audio. */ }
 }
+function startBackgroundMusic(){
+  try{
+    const AudioEngine=window.AudioContext||window.webkitAudioContext;if(!AudioEngine)return;
+    if(!audioContext)audioContext=new AudioEngine();if(audioContext.state==='suspended')audioContext.resume();
+    if(!musicMaster){
+      musicMaster=audioContext.createGain();musicMaster.gain.value=.34;musicMaster.connect(audioContext.destination);
+      for(const [frequency,type,volume] of [[55,'triangle',.035],[82.4,'sine',.018]]){
+        const drone=audioContext.createOscillator(),gain=audioContext.createGain();drone.type=type;drone.frequency.value=frequency;gain.gain.value=volume;drone.connect(gain);gain.connect(musicMaster);drone.start();
+      }
+      const notes=[110,130.81,164.81,146.83,123.47,164.81,196,146.83,110,130.81,174.61,146.83];let step=0;
+      musicTimer=setInterval(()=>{
+        if(!musicEnabled||audioContext.state!=='running')return;
+        const now=audioContext.currentTime,osc=audioContext.createOscillator(),gain=audioContext.createGain();
+        osc.type='triangle';osc.frequency.setValueAtTime(notes[step%notes.length],now);gain.gain.setValueAtTime(.0001,now);gain.gain.linearRampToValueAtTime(step%3===0?.075:.045,now+.09);gain.gain.exponentialRampToValueAtTime(.0001,now+.72);osc.connect(gain);gain.connect(musicMaster);osc.start(now);osc.stop(now+.74);step++;
+      },760);
+    }
+    musicMaster.gain.setTargetAtTime(musicEnabled?.34:0,audioContext.currentTime,.22);
+  }catch{ /* The soundtrack stays optional if the browser blocks audio. */ }
+}
+function updateMusicButton(){if(!ui.musicToggle)return;ui.musicToggle.textContent=musicEnabled?'♫':'♪';ui.musicToggle.setAttribute('aria-label',musicEnabled?'Silenciar música':'Activar música');ui.musicToggle.title=musicEnabled?'Silenciar música':'Activar música';ui.musicToggle.classList.toggle('muted',!musicEnabled);}
+function toggleBackgroundMusic(){musicEnabled=!musicEnabled;updateMusicButton();if(musicEnabled)startBackgroundMusic();else if(musicMaster&&audioContext)musicMaster.gain.setTargetAtTime(0,audioContext.currentTime,.18);}
 function updateSampleVisuals(t) {
   for(const s of samples){if(s.collected)continue;s.group.position.y=.055+Math.sin(t*1.8+s.index)*.045;s.group.rotation.y=t*.32+s.index;}
 }
@@ -480,7 +573,7 @@ function createProjectile(origin, direction) {
 function fire() {
   if(state!=='playing'||performance.now()-lastShot<320)return;
   lastShot=performance.now();
-  attackAnimTimer=.34;
+  attackAnimTimer=.78;
   const direction=camera.getWorldDirection(new THREE.Vector3());
   const origin=player.group.position.clone().add(new THREE.Vector3(0,1.35,0)).addScaledVector(direction,.68);
   const aimPoint=camera.position.clone().addScaledVector(direction,40);
@@ -572,6 +665,14 @@ function smoothPlayerInput(dt) {
   const nextAnim=attackAnimTimer>0?'Attack':playerSpeed<.2?'Idle':sprint&&playerSpeed>3.8?'Run':'Walk';
   setAnimation(nextAnim);
   const gait=playerSpeed>.16?elapsed*(sprint?13:8):0;
+  if(player.fallback){
+    const bob=playerSpeed>.16?Math.sin(gait*2)*(sprint?0.045:0.027):0;
+    const forwardSpeed=player.velocity.x*Math.sin(player.facing)+player.velocity.z*Math.cos(player.facing);
+    const sideSpeed=player.velocity.x*Math.cos(player.facing)-player.velocity.z*Math.sin(player.facing);
+    player.fallback.position.y=THREE.MathUtils.damp(player.fallback.position.y,bob,10,dt);
+    player.fallback.rotation.x=THREE.MathUtils.damp(player.fallback.rotation.x,THREE.MathUtils.clamp(forwardSpeed*.01,-.06,.06),8,dt);
+    player.fallback.rotation.z=THREE.MathUtils.damp(player.fallback.rotation.z,THREE.MathUtils.clamp(-sideSpeed*.012,-.07,.07),8,dt);
+  }
   for(let i=0;i<player.avatarLimbs.legs.length;i++)player.avatarLimbs.legs[i].rotation.x=playerSpeed>.16?Math.sin(gait+i*Math.PI)*.46:THREE.MathUtils.damp(player.avatarLimbs.legs[i].rotation.x,0,8,dt);
   for(let i=0;i<player.avatarLimbs.arms.length;i++){
     const arm=player.avatarLimbs.arms[i],swing=playerSpeed>.16?Math.sin(gait+i*Math.PI+Math.PI)*.28:0;
@@ -582,6 +683,11 @@ function smoothPlayerInput(dt) {
 
 function setAnimation(name){
   animState=name;
+  const action=player?.avatarActions?.[name];
+  if(!action||player.activeAvatarAction===action)return;
+  const previous=player.activeAvatarAction;action.enabled=true;action.reset();action.setLoop(name==='Attack'?THREE.LoopOnce:THREE.LoopRepeat,name==='Attack'?1:Infinity);
+  action.clampWhenFinished=name==='Attack';action.setEffectiveTimeScale(name==='Attack'?5:name==='Run'?1.05:name==='Walk'?1.12:1);action.fadeIn(.18).play();
+  previous?.fadeOut(.18);player.activeAvatarAction=action;
 }
 function updateEnemies(dt){
   for(const e of enemies){if(!e.alive)continue;e.phase+=dt;const delta=player.group.position.clone().sub(e.position);delta.y=0;const dist=delta.length();
@@ -611,6 +717,17 @@ function updateCamera(dt){
   // Keep a playable third-person distance even when a low obstacle crosses the ray.
   let target=desired;if(hits.length)target=focus.clone().addScaledVector(dir,Math.min(length,Math.max(6.2,hits[0].distance-.25)));
   camera.position.lerp(target,1-Math.exp(-8*dt));camera.lookAt(focus);
+  updateElevatorGuide();
+}
+
+function updateElevatorGuide(){
+  if(!ui.elevatorGuide||!player?.group)return;
+  const dx=-player.group.position.x,dz=14.8-player.group.position.z;
+  const desired=Math.atan2(dx,dz),relative=Math.atan2(Math.sin(desired-cameraYaw),Math.cos(desired-cameraYaw));
+  const distance=Math.round(Math.hypot(dx,dz)),locked=collected<currentLevel().samples.length;
+  ui.elevatorArrow.style.transform=`rotate(${relative}rad)`;
+  ui.elevatorGuide.classList.toggle('unlocked',!locked);
+  ui.elevatorText.textContent=locked?`ELEVADOR BLOQUEADO · ${distance} m`:`ELEVADOR · ${distance} m`;
 }
 
 function updateInteract(){
@@ -651,11 +768,16 @@ function toast(text){ui.toast.textContent=text;ui.toast.style.opacity='1';messag
 function showError(text){ui.error.textContent=text;ui.error.classList.add('visible');setTimeout(()=>ui.error.classList.remove('visible'),3400);}
 
 function showHUD(show){ui.hud.classList.toggle('hud-hidden',!show);ui.topbar.classList.toggle('hud-hidden',!show);}
-function startGame(){
-  resetGame();state='playing';ui.start.classList.add('hidden');ui.pause.classList.add('hidden');ui.end.classList.add('hidden');$('continueBtn').classList.add('hidden');$('restartBtn').classList.remove('hidden');showHUD(true);clock.getDelta();playSound('level');
+function lockGameMouse(){
+  if(matchMedia('(pointer: coarse)').matches||!ui.canvas.requestPointerLock)return;
+  try{const request=ui.canvas.requestPointerLock();request?.catch(()=>{});}catch{/* Dragging the canvas remains available. */}
 }
-function pauseGame(){if(state==='playing'){state='paused';ui.pause.classList.remove('hidden');showHUD(false);}else if(state==='paused'){state='playing';ui.pause.classList.add('hidden');showHUD(true);clock.getDelta();}}
+function startGame(){
+  resetGame();state='playing';ui.start.classList.add('hidden');ui.pause.classList.add('hidden');ui.end.classList.add('hidden');$('continueBtn').classList.add('hidden');$('restartBtn').classList.remove('hidden');showHUD(true);clock.getDelta();playSound('level');startBackgroundMusic();lockGameMouse();
+}
+function pauseGame(){if(state==='playing'){state='paused';ui.pause.classList.remove('hidden');showHUD(false);if(pointerLocked)document.exitPointerLock();}else if(state==='paused'){state='playing';ui.pause.classList.add('hidden');showHUD(true);clock.getDelta();lockGameMouse();}}
 function presentEnd(title,message,canContinue){
+  if(pointerLocked)document.exitPointerLock();
   showHUD(false);ui.end.classList.remove('hidden');
   $('endKicker').innerHTML=`<span></span>${canContinue?'REPORTE DE NIVEL':'REPORTE DE MISIÓN'}`;$('endTitle').innerHTML=title;$('endMessage').textContent=message;
   $('finalTime').textContent=formatTime(elapsed);$('finalSamples').textContent=`${String(collected).padStart(2,'0')} / ${String(currentLevel().samples.length).padStart(2,'0')}`;$('finalEnemies').textContent=String(enemies.filter(e=>e.alive).length).padStart(2,'0');
@@ -681,24 +803,27 @@ function setupLevel(index){
   cameraYaw=0;moveYaw=null;cameraPitch=.2;cameraDistance=8.4;updateHUD();setAnimation('Idle');
 }
 function resetGame(){elapsed=0;setupLevel(0);}
-function continueLevel(){setupLevel(levelIndex+1);state='playing';ui.end.classList.add('hidden');$('continueBtn').classList.add('hidden');showHUD(true);clock.getDelta();}
-function restartLevel(){setupLevel(levelIndex);state='playing';ui.pause.classList.add('hidden');showHUD(true);clock.getDelta();}
-function returnToCharacterSelect(){levelIndex=0;state='ready';ui.pause.classList.add('hidden');ui.start.classList.remove('hidden');showHUD(false);}
+function continueLevel(){setupLevel(levelIndex+1);state='playing';ui.end.classList.add('hidden');$('continueBtn').classList.add('hidden');showHUD(true);clock.getDelta();lockGameMouse();}
+function restartLevel(){setupLevel(levelIndex);state='playing';ui.pause.classList.add('hidden');showHUD(true);clock.getDelta();lockGameMouse();}
+function returnToCharacterSelect(){if(pointerLocked)document.exitPointerLock();levelIndex=0;state='ready';ui.pause.classList.add('hidden');ui.start.classList.remove('hidden');showHUD(false);}
 
 function bindEvents(){
   $('startBtn').addEventListener('click',startGame);$('restartBtn').addEventListener('click',startGame);$('resumeBtn').addEventListener('click',pauseGame);$('pauseBtn').addEventListener('click',pauseGame);$('pauseRestart').addEventListener('click',restartLevel);$('continueBtn').addEventListener('click',continueLevel);$('changeCharacter').addEventListener('click',returnToCharacterSelect);
-  $('characterPrev').addEventListener('click',()=>{characterIndex=(characterIndex+CHARACTERS.length-1)%CHARACTERS.length;buildFallbackAvatar();applyCharacterAppearance();});
-  $('characterNext').addEventListener('click',()=>{characterIndex=(characterIndex+1)%CHARACTERS.length;buildFallbackAvatar();applyCharacterAppearance();});
+  $('characterPrev').addEventListener('click',()=>{characterIndex=(characterIndex+CHARACTERS.length-1)%CHARACTERS.length;applyCharacterAppearance();});
+  $('characterNext').addEventListener('click',()=>{characterIndex=(characterIndex+1)%CHARACTERS.length;applyCharacterAppearance();});
+  ui.musicToggle?.addEventListener('click',toggleBackgroundMusic);updateMusicButton();
   $('power').addEventListener('input',e=>{power=Number(e.target.value);ui.powerValue.textContent=String(power);});
   const movementKeys=new Set(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowRight','ArrowDown','ArrowLeft']);
-  addEventListener('keydown',e=>{if(movementKeys.has(e.code)&&moveYaw===null)moveYaw=cameraYaw;keys.add(e.code);if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();if(e.code==='Escape'){if(state==='playing'&&!pointerLocked)pauseGame();}if(e.code==='KeyE'||e.code==='KeyR')interact();if(e.code==='KeyF')fire();});
+  addEventListener('keydown',e=>{if(movementKeys.has(e.code)&&moveYaw===null)moveYaw=cameraYaw;keys.add(e.code);if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();if(e.code==='Escape'&&state==='playing')pauseGame();if(e.code==='KeyE'||e.code==='KeyR')interact();if(e.code==='KeyF')fire();});
   addEventListener('keyup',e=>{keys.delete(e.code);if([...movementKeys].every(code=>!keys.has(code)))moveYaw=null;});
   addEventListener('blur',()=>{keys.clear();moveYaw=null;});
   ui.canvas.addEventListener('mousedown',e=>{if(state==='playing'){mouseDragging=true;dragCameraMoved=false;lastMouseX=e.clientX;lastMouseY=e.clientY;}});
   addEventListener('mouseup',()=>{mouseDragging=false;});
+  document.addEventListener('pointerlockchange',()=>{pointerLocked=document.pointerLockElement===ui.canvas;mouseDragging=false;});
   ui.canvas.addEventListener('click',()=>{if(state==='playing'&&!dragCameraMoved)fire();dragCameraMoved=false;});
   document.addEventListener('mousemove',e=>{if(state!=='playing'||(!pointerLocked&&!mouseDragging))return;const dx=pointerLocked?e.movementX:e.clientX-lastMouseX,dy=pointerLocked?e.movementY:e.clientY-lastMouseY;if(Math.abs(dx)+Math.abs(dy)>2)dragCameraMoved=true;cameraYaw-=dx*.0025;if(moveYaw!==null)moveYaw-=dx*.0025;cameraPitch=THREE.MathUtils.clamp(cameraPitch-dy*.0018,-.03,.72);lastMouseX=e.clientX;lastMouseY=e.clientY;});
   ui.canvas.addEventListener('wheel',e=>{cameraDistance=THREE.MathUtils.clamp(cameraDistance+Math.sign(e.deltaY)*.45,4.3,9.2);},{passive:true});
+  document.addEventListener('contextmenu',e=>{if(e.target===ui.canvas)e.preventDefault();});
   addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));});
   // On touchscreens, drag to rotate camera; on-screen start and actions stay usable.
   let touch=null;ui.canvas.addEventListener('touchstart',e=>{touch={x:e.touches[0].clientX,y:e.touches[0].clientY};},{passive:true});ui.canvas.addEventListener('touchmove',e=>{if(!touch||state!=='playing')return;const t=e.touches[0],delta=(t.clientX-touch.x)*.007;cameraYaw-=delta;if(moveYaw!==null)moveYaw-=delta;cameraPitch=THREE.MathUtils.clamp(cameraPitch-(t.clientY-touch.y)*.004,-.03,.72);touch={x:t.clientX,y:t.clientY};},{passive:true});ui.canvas.addEventListener('touchend',()=>touch=null);
@@ -712,7 +837,7 @@ function updateGame(dt){
   // Extraction only succeeds on entry after all samples have been collected.
   if(collected===currentLevel().samples.length&&player.group.position.z>14.2&&Math.abs(player.group.position.x)<6.4)completeLevel();
 }
-function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);if(state==='playing')updateGame(dt);else{updateCamera(dt);updateSampleVisuals(clock.elapsedTime);}renderer.render(scene,camera);}
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);if(state==='playing')updateGame(dt);else{updateCamera(dt);updateSampleVisuals(clock.elapsedTime);}player?.animationMixer?.update(dt);renderer.render(scene,camera);}
 
 async function init(){
   try{

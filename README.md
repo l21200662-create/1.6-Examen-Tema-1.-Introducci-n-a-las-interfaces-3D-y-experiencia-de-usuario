@@ -14,18 +14,19 @@ La partida contiene **cuatro niveles progresivos**, cada uno con su propio escen
 
 ## Personajes
 
-Antes de iniciar, usa las flechas del selector para elegir entre tres operadores: **EVA-07**, **GUARDIA-12** y **BIO-03**. Cada uno tiene uniforme, silueta y equipo propios. Desde el menú de pausa puedes volver a la selección; hacerlo reinicia la misión.
+Antes de iniciar, usa las flechas del selector para elegir entre **Abuela Deportiva**, **Sujeto CH-17** y **BIO-03**. Abuela Deportiva usa el modelo `Sporty Granny.gltf` y sus animaciones de espera, caminar, correr y lanzamiento. CH-17 usa `Ch17_nonPBR.fbx` con el mismo conjunto de animaciones; el modelo se descarga al seleccionarlo. BIO-03 conserva su modelo del juego. Desde el menú de pausa puedes volver a la selección; hacerlo reinicia la misión.
 
 ## Cómo jugar
 
 1. Pulsa **Iniciar misión**. Los efectos de sonido se activan al comenzar.
 2. Usa **W** para avanzar, **S** para retroceder, **A** para moverte a la derecha y **D** para moverte a la izquierda. Mantén **Shift** para correr.
-3. Arrastra el mouse sobre la escena para orientar la cámara; mientras avanzas, la cámara acompaña el rumbo del personaje. Usa la rueda para ajustar la distancia.
+3. Mueve el mouse para orientar la cámara. Al iniciar, el puntero queda capturado; pulsa **Esc** para pausar y soltarlo. Si no se captura, arrastra sobre la escena. La cámara acompaña el rumbo del personaje y la rueda ajusta la distancia.
 4. Acércate a las muestras y pulsa **E** o **R** para recuperarlas.
 5. Haz clic o pulsa **F** para disparar el impulsor. El deslizador **Potencia** modifica la fuerza del disparo.
 6. Completa el objetivo antes del límite de tiempo, después llega al elevador y pulsa **Continuar al nivel siguiente**.
 7. Los infectados persiguen al personaje. Sus ataques y las zonas de riesgo reducen la integridad del traje.
 8. Pulsa **Esc** para pausar o reanudar. Desde la pausa puedes reiniciar el nivel o cambiar de personaje.
+9. Sigue la flecha **ELEVADOR** en el HUD y los indicadores luminosos del suelo; el HUD muestra la distancia y avisa cuando la salida está desbloqueada. Usa **♫** para silenciar o activar la música ambiental.
 
 ## Niveles
 
@@ -40,12 +41,13 @@ Antes de iniciar, usa las flechas del selector para elegir entre tres operadores
 
 - `index.html`: interfaz, selector de personaje, HUD, pantallas del juego e import map.
 - `assets/css/styles.css`: estilos adaptables y componentes de la interfaz.
-- `assets/js/main.js`: escena 3D, física, controles, personajes, enemigos, niveles y reglas de la misión.
+- `assets/js/main.js`: escena 3D, física, controles, personajes, música, enemigos, niveles y reglas de la misión.
+- `assets/characters/`: modelos y clips de animación usados por Abuela Deportiva y CH-17.
 
 ## Tecnologías
 
-- **Three.js** renderiza los escenarios, los personajes procedurales, la cámara, la iluminación y los efectos.
-- La animación de pasos, carrera y disparo se genera en el juego. Los efectos de sonido se sintetizan con Web Audio.
+- **Three.js** renderiza los escenarios, los modelos, la cámara, la iluminación y los efectos. `GLTFLoader` y `FBXLoader` cargan los personajes.
+- Las animaciones de espera, caminar, correr y lanzar proceden de los archivos GLTF de Mixamo. El BIO-03 usa animación procedural. La música ambiental y los efectos se sintetizan con Web Audio.
 - **Rapier 3D** proporciona gravedad, colisionadores y cuerpos rígidos dinámicos para las cajas, tambores, viales y proyectiles.
 - HTML, CSS y JavaScript conforman la interfaz web. Se usan módulos y rutas relativas compatibles con GitHub Pages.
 

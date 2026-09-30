@@ -33,7 +33,7 @@ jobs:
         run: |
           mkdir -p sitio/assets
           cp index.html sitio/index.html
-          cp -R assets/css assets/js sitio/assets/
+          cp -R assets/css assets/js assets/characters sitio/assets/
 
       - name: Cargar los archivos del sitio
         uses: actions/upload-pages-artifact@v4
