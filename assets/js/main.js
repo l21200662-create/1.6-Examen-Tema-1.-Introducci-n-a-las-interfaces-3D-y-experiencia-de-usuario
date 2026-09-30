@@ -48,7 +48,7 @@ let moveYaw = null;
 let initialized = false, state = 'loading', elapsed = 0, levelTimeRemaining = 0, health = 100, collected = 0;
 let power = 13, enemies = [], samples = [], props = [], projectiles = [], particles = [], exitDoor;
 let lastInteract = 0, animState = 'Idle', playerSpeed = 0, lastShot = 0, attackAnimTimer = 0;
-let levelIndex = 0, characterIndex = 0;
+let levelIndex = 0, characterIndex = 2, userRequestedCharacterAsset = false;
 const solidBoxes = [];
 const cameraOccluders = [];
 let levelScene = null;
@@ -309,7 +309,7 @@ function applyCharacterAppearance() {
     avatarLoadRevision++;player.animationMixer?.stopAllAction();player.animationMixer=null;player.avatarActions={};player.activeAvatarAction=null;
     buildFallbackAvatar();
     if(player.fallbackMats){player.fallbackMats.suit.color.set(profile.suit);player.fallbackMats.accent.color.set(profile.accent);player.fallbackMats.accent.emissive.set(profile.accent);player.fallbackMats.dark.color.set(profile.dark);player.fallbackMats.visor.color.set(profile.visor);}
-    if(profile.model){if($('characterRole'))$('characterRole').textContent=`${profile.role} · CARGANDO MODELO`;loadSelectedAvatar(profile);}
+    if(profile.model&&userRequestedCharacterAsset){if($('characterRole'))$('characterRole').textContent=`${profile.role} · CARGANDO MODELO`;loadSelectedAvatar(profile);}
   }
 }
 
@@ -827,8 +827,8 @@ function returnToCharacterSelect(){if(pointerLocked)document.exitPointerLock();l
 
 function bindEvents(){
   $('startBtn').addEventListener('click',startGame);$('restartBtn').addEventListener('click',startGame);$('resumeBtn').addEventListener('click',pauseGame);$('pauseBtn').addEventListener('click',pauseGame);$('pauseRestart').addEventListener('click',restartLevel);$('continueBtn').addEventListener('click',continueLevel);$('changeCharacter').addEventListener('click',returnToCharacterSelect);
-  $('characterPrev').addEventListener('click',()=>{characterIndex=(characterIndex+CHARACTERS.length-1)%CHARACTERS.length;applyCharacterAppearance();});
-  $('characterNext').addEventListener('click',()=>{characterIndex=(characterIndex+1)%CHARACTERS.length;applyCharacterAppearance();});
+  $('characterPrev').addEventListener('click',()=>{characterIndex=(characterIndex+CHARACTERS.length-1)%CHARACTERS.length;userRequestedCharacterAsset=true;applyCharacterAppearance();});
+  $('characterNext').addEventListener('click',()=>{characterIndex=(characterIndex+1)%CHARACTERS.length;userRequestedCharacterAsset=true;applyCharacterAppearance();});
   ui.musicToggle?.addEventListener('click',toggleBackgroundMusic);updateMusicButton();
   $('power').addEventListener('input',e=>{power=Number(e.target.value);ui.powerValue.textContent=String(power);});
   const movementKeys=new Set(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowRight','ArrowDown','ArrowLeft']);
