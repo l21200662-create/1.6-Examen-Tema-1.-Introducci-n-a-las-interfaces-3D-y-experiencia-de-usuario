@@ -65,7 +65,7 @@
           <button class="character-arrow" id="characterNext" aria-label="Siguiente personaje">›</button>
         </div>
         <div class="start-row"><button class="primary-button" id="startBtn"><span>INICIAR MISIÓN</span><b>↗</b></button><div class="start-note"><span class="key-cluster"><kbd>W</kbd><span><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span></span><span>W ADELANTE · A DERECHA<br>D IZQUIERDA · S ATRÁS<br><small>SHIFT CORRER · MOUSE PARA GIRAR CÁMARA</small></span></div></div>
-        <div class="footer-note"><span>PROTOCOLO DE EMERGENCIA ACTIVO</span><span class="mono">v1.2.7 <i>●</i> SISTEMA EN LÍNEA</span></div>
+        <div class="footer-note"><span>PROTOCOLO DE EMERGENCIA ACTIVO</span><span class="mono">v1.2.8 <i>●</i> SISTEMA EN LÍNEA</span></div>
       </div>
       <div class="side-label mono">ESTACIÓN BIOLÓGICA &nbsp;—&nbsp; 2049</div>
     </section>
@@ -85,7 +85,7 @@
     if (location.protocol === 'file:') {
       showStartupError('Abre "abrir-juego.bat" para iniciar el juego. No abras index.html directamente.');
     } else {
-      import('./assets/js/main.js?v=1.2.7').catch((cause) => {
+      import('./assets/js/main.js?v=1.2.8').catch((cause) => {
         console.error(cause);
         showStartupError('No se pudo cargar el juego. Comprueba tu conexión a Internet y vuelve a intentarlo.');
       });

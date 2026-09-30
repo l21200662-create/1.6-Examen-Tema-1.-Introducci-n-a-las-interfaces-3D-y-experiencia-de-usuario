@@ -368,7 +368,7 @@ async function loadSelectedAvatar(profile){
     if(player.fallback)player.group.remove(player.fallback);
     player.fallback=null;player.fallbackMats=null;player.avatarLimbs={arms:[],legs:[]};player.group.add(holder);player.avatarModel=holder;
     const bones={};holder.traverse(node=>{if(node.isBone){const key=node.name.replace(/^mixamorig\d*/i,'mixamorig').replace(/^mixamorig/i,'').replace(/[^a-z0-9]/gi,'').toLowerCase();if(key&&!bones[key])bones[key]=node;}});
-    player.avatarMotionBones={leftUpLeg:bones.leftupleg,rightUpLeg:bones.rightupleg,leftLeg:bones.leftleg,rightLeg:bones.rightleg,leftArm:bones.leftarm,rightArm:bones.rightarm,spine:bones.spine};player.appliedAvatarOffsets=[];
+    player.avatarMotionBones={hips:bones.hips,leftUpLeg:bones.leftupleg,rightUpLeg:bones.rightupleg,leftLeg:bones.leftleg,rightLeg:bones.rightleg,leftFoot:bones.leftfoot,rightFoot:bones.rightfoot,leftArm:bones.leftarm,rightArm:bones.rightarm,leftForeArm:bones.leftforearm,rightForeArm:bones.rightforearm,neck:bones.neck,spine:bones.spine};player.appliedAvatarOffsets=[];
     player.avatarFooting={bones:[bones.leftfoot,bones.rightfoot].filter(Boolean),restHeight:0};
     player.animationMixer=new THREE.AnimationMixer(holder);player.avatarActions={};player.activeAvatarAction=null;
     for(const name of ['Idle','Walk','Run','Attack'])if(mappedClips[name]?.tracks.length)player.avatarActions[name]=player.animationMixer.clipAction(mappedClips[name]);
@@ -891,12 +891,18 @@ function applyAvatarLocomotion(){
   const attack=attackAnimTimer>0?0.45:1;
   const bones=player.avatarMotionBones;
   const offset=(bone,x)=>{if(!bone||Math.abs(x)<.001)return;const rotation=new THREE.Quaternion().setFromEuler(new THREE.Euler(x,0,0));bone.quaternion.multiply(rotation);player.appliedAvatarOffsets.push({bone,rotation});};
-  const swing=Math.sin(stride)*(running?0.2:0.15)*strength*attack;
+  const swing=Math.sin(stride)*(running?0.62:0.44)*strength*attack;
   offset(bones.leftUpLeg,swing);offset(bones.rightUpLeg,-swing);
-  offset(bones.leftLeg,Math.max(0,Math.sin(stride+Math.PI/2))*(running?0.13:0.08)*strength);
-  offset(bones.rightLeg,Math.max(0,Math.sin(stride-Math.PI/2))*(running?0.13:0.08)*strength);
-  offset(bones.leftArm,-swing*.62);offset(bones.rightArm,swing*.48*attack);
-  offset(bones.spine,Math.sin(stride*2)*.018*strength);
+  offset(bones.leftLeg,Math.max(0,Math.sin(stride+Math.PI/2))*(running?0.58:0.4)*strength);
+  offset(bones.rightLeg,Math.max(0,Math.sin(stride-Math.PI/2))*(running?0.58:0.4)*strength);
+  offset(bones.leftFoot,-Math.max(0,Math.sin(stride+Math.PI/2))*.18*strength);
+  offset(bones.rightFoot,-Math.max(0,Math.sin(stride-Math.PI/2))*.18*strength);
+  offset(bones.leftArm,-swing*.72);offset(bones.rightArm,swing*.58*attack);
+  offset(bones.leftForeArm,-Math.max(0,Math.sin(stride+Math.PI/2))*.15*strength);
+  offset(bones.rightForeArm,-Math.max(0,Math.sin(stride-Math.PI/2))*.15*strength*attack);
+  offset(bones.spine,Math.sin(stride*2)*.055*strength+Math.sin(elapsed*2.2)*.012);
+  offset(bones.hips,Math.sin(stride*2)*.035*strength);
+  offset(bones.neck,Math.sin(stride*2)*.025*strength);
 }
 function keepAvatarFeetGrounded(){
   const footing=player?.avatarFooting;if(!footing?.bones.length||!player.avatarModel)return;
