@@ -21,9 +21,9 @@ const LEVELS = [
   { title: 'Extracción final', objective: 'Recupera 4 muestras, sobrevive y alcanza el elevador', samples: [[-15,-9],[15,-9],[-15,7],[15,7]], enemies: [[-15,3],[14,-2],[0,-13],[15,10],[-15,-12],[7,8],[-7,-3]], enemyHealth: 3, enemySpeed: 1.42, timeLimit: 105, theme: 'reactor', background: 0x0d1b23, atmosphere: 0x8ce8ff, floor: 0x243a48 },
 ];
 const CHARACTERS = [
-  { name: 'ABUELA DEPORTIVA', role: 'Operadora veterana · ágil y resistente', initial: 'AG', suit: '#d8d8c5', accent: '#c8ee68', dark: '#28352f', visor: '#243b3c', silhouette: 'scout', model: './assets/characters/Sporty Granny.gltf', format: 'gltf' },
-  { name: 'SUJETO CH-17', role: 'Unidad de prueba · traje de contención', initial: '17', suit: '#8ea4ba', accent: '#f3a25d', dark: '#263647', visor: '#1e3345', silhouette: 'guard', model: './assets/characters/Ch17_nonPBR.fbx', format: 'fbx' },
-  { name: 'BIO-03', role: 'Técnica de laboratorio', initial: '03', suit: '#92c8b6', accent: '#ff8e9b', dark: '#29433f', visor: '#213e42', silhouette: 'scientist' },
+  { name: 'ABUELA DEPORTIVA', hudName: 'ABUELA', role: 'Operadora veterana · ágil y resistente', initial: 'AG', suit: '#d8d8c5', accent: '#c8ee68', dark: '#28352f', visor: '#243b3c', silhouette: 'scout', model: './assets/characters/Sporty Granny.gltf', format: 'gltf' },
+  { name: 'SUJETO CH-17', hudName: 'CH-17', role: 'Unidad de prueba · traje de contención', initial: '17', suit: '#8ea4ba', accent: '#f3a25d', dark: '#263647', visor: '#1e3345', silhouette: 'guard', model: './assets/characters/Ch17_nonPBR.fbx', format: 'fbx' },
+  { name: 'BIO-03', hudName: 'BIO-03', role: 'Técnica de laboratorio', initial: '03', suit: '#92c8b6', accent: '#ff8e9b', dark: '#29433f', visor: '#213e42', silhouette: 'scientist' },
 ];
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x101b18);
@@ -175,7 +175,7 @@ function buildRoom() {
   const signContext=signCanvas.getContext('2d');signContext.fillStyle='#101b16';signContext.fillRect(0,0,768,144);signContext.strokeStyle='#c8ee68';signContext.lineWidth=5;signContext.strokeRect(8,8,752,128);
   signContext.fillStyle='#d9f38b';signContext.font='700 66px Arial';signContext.fillText('↑  ELEVADOR',34,82);signContext.fillStyle='#9bb39e';signContext.font='24px monospace';signContext.fillText('EXTRACCIÓN · SECTOR 04',38,119);
   const signTexture=new THREE.CanvasTexture(signCanvas);signTexture.colorSpace=THREE.SRGBColorSpace;
-  const sign=new THREE.Mesh(new THREE.PlaneGeometry(4.7,.88),new THREE.MeshBasicMaterial({map:signTexture,side:THREE.DoubleSide,toneMapped:false}));sign.position.set(0,4.1,15.28);scene.add(sign);
+  const sign=new THREE.Mesh(new THREE.PlaneGeometry(4.7,.88),new THREE.MeshBasicMaterial({map:signTexture,side:THREE.DoubleSide,toneMapped:false}));sign.position.set(0,4.1,15.28);sign.rotation.y=Math.PI;scene.add(sign);
   const arrowShape=new THREE.Shape();arrowShape.moveTo(0,-.36);arrowShape.lineTo(-.32,.12);arrowShape.lineTo(-.13,.12);arrowShape.lineTo(-.13,.34);arrowShape.lineTo(.13,.34);arrowShape.lineTo(.13,.12);arrowShape.lineTo(.32,.12);arrowShape.closePath();
   for(let z=9.1;z<=13.7;z+=1.15){const arrow=new THREE.Mesh(new THREE.ShapeGeometry(arrowShape),new THREE.MeshBasicMaterial({color:0xc8ee68,transparent:true,opacity:.76,side:THREE.DoubleSide,depthWrite:false}));arrow.rotation.x=-Math.PI/2;arrow.position.set(0,.035,z);scene.add(arrow);}
   // Extraction floor chevrons.
@@ -303,6 +303,7 @@ function applyCharacterAppearance() {
   if($('characterInitial'))$('characterInitial').textContent=profile.initial;
   if($('characterName'))$('characterName').textContent=profile.name;
   if($('characterRole'))$('characterRole').textContent=profile.role;
+  if($('characterSubject'))$('characterSubject').textContent=profile.hudName;
   $('characterDots')?.querySelectorAll('i').forEach((dot,i)=>dot.classList.toggle('selected',i===characterIndex));
   if(player?.group){
     avatarLoadRevision++;player.animationMixer?.stopAllAction();player.animationMixer=null;player.avatarActions={};player.activeAvatarAction=null;
