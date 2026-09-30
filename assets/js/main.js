@@ -319,7 +319,7 @@ function loadAnimationLibrary(){
     animationLibraryPromise=Promise.all(Object.entries(files).map(async([name,file])=>{
       const asset=await gltfLoader.loadAsync(`./assets/characters/${encodeURIComponent(file)}`);
       const clip=asset.animations[0]?.clone();
-      if(clip){clip.name=name;clip.tracks=clip.tracks.filter(track=>!(track.name.startsWith('mixamorig:Hips.')&&track.name.endsWith('.position')));}
+      if(clip)clip.name=name;
       return[name,clip];
     })).then(entries=>Object.fromEntries(entries.filter(([,clip])=>clip)));
   }
@@ -334,6 +334,21 @@ function loadCharacterAsset(profile){
   return characterAssetCache.get(profile.model);
 }
 
+function mapClipsToAvatar(avatarRoot,clips){
+  const cleanName=name=>name.replace(/[^a-z0-9]/gi,'').toLowerCase(),nodes=new Map();
+  avatarRoot.traverse(node=>{if(node.name){node.name=node.name.replaceAll(':','');const key=cleanName(node.name);if(key&&!nodes.has(key))nodes.set(key,node);}});
+  return Object.fromEntries(Object.entries(clips).map(([name,source])=>{
+    const clip=source.clone();clip.tracks=clip.tracks.filter(track=>{
+      const split=track.name.lastIndexOf('.');if(split<0)return false;
+      const targetName=track.name.slice(0,split),property=track.name.slice(split);
+      if(cleanName(targetName)==='mixamorighips'&&property==='.position')return false;
+      const node=nodes.get(cleanName(targetName));if(!node)return false;
+      track.name=`${node.name}${property}`;return true;
+    });
+    return[name,clip];
+  }));
+}
+
 async function loadSelectedAvatar(profile){
   const revision=++avatarLoadRevision;
   try{
@@ -344,14 +359,16 @@ async function loadSelectedAvatar(profile){
     const bounds=new THREE.Box3().setFromObject(holder),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
     if(!Number.isFinite(size.y)||size.y<.1)throw new Error('El modelo no tiene una altura válida.');
     const scale=1.86/size.y;holder.scale.setScalar(scale);holder.position.set(-center.x*scale,-bounds.min.y*scale,-center.z*scale);
-    holder.traverse(node=>{if(node.name)node.name=node.name.replaceAll(':','');if(node.isMesh){node.castShadow=true;node.receiveShadow=true;node.frustumCulled=false;}});
+    holder.traverse(node=>{if(node.isMesh){node.castShadow=true;node.receiveShadow=true;node.frustumCulled=false;}});
+    const mappedClips=mapClipsToAvatar(holder,asset.clips);
+    if(!mappedClips.Idle?.tracks.length)throw new Error('No se pudieron enlazar las animaciones al esqueleto.');
     player.animationMixer?.stopAllAction();
     player.fallback?.traverse(node=>{if(node.isMesh)node.geometry.dispose();});
     if(player.fallbackMats)Object.values(player.fallbackMats).forEach(material=>material.dispose());
     if(player.fallback)player.group.remove(player.fallback);
     player.fallback=null;player.fallbackMats=null;player.avatarLimbs={arms:[],legs:[]};player.group.add(holder);player.avatarModel=holder;
     player.animationMixer=new THREE.AnimationMixer(holder);player.avatarActions={};player.activeAvatarAction=null;
-    for(const name of ['Idle','Walk','Run','Attack'])if(asset.clips[name])player.avatarActions[name]=player.animationMixer.clipAction(asset.clips[name]);
+    for(const name of ['Idle','Walk','Run','Attack'])if(mappedClips[name]?.tracks.length)player.avatarActions[name]=player.animationMixer.clipAction(mappedClips[name]);
     player.avatarActions.Attack?.setEffectiveTimeScale(5).setLoop(THREE.LoopOnce,1);
     attachIonEmitter(model);if($('characterRole'))$('characterRole').textContent=profile.role;setAnimation(animState==='loading'?'Idle':animState);
   }catch(error){if(revision===avatarLoadRevision){if($('characterRole'))$('characterRole').textContent=`${profile.role} · PERSONAJE DE RESPALDO`;console.warn(`No se pudo cargar ${profile.name}; se conserva el personaje de respaldo.`,error);}}
