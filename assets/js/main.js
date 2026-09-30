@@ -344,7 +344,7 @@ async function loadSelectedAvatar(profile){
     const bounds=new THREE.Box3().setFromObject(holder),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
     if(!Number.isFinite(size.y)||size.y<.1)throw new Error('El modelo no tiene una altura válida.');
     const scale=1.86/size.y;holder.scale.setScalar(scale);holder.position.set(-center.x*scale,-bounds.min.y*scale,-center.z*scale);
-    holder.traverse(node=>{if(node.isMesh){node.castShadow=true;node.receiveShadow=true;node.frustumCulled=false;}});
+    holder.traverse(node=>{if(node.name)node.name=node.name.replaceAll(':','');if(node.isMesh){node.castShadow=true;node.receiveShadow=true;node.frustumCulled=false;}});
     player.animationMixer?.stopAllAction();
     player.fallback?.traverse(node=>{if(node.isMesh)node.geometry.dispose();});
     if(player.fallbackMats)Object.values(player.fallbackMats).forEach(material=>material.dispose());
@@ -358,7 +358,7 @@ async function loadSelectedAvatar(profile){
 }
 
 function attachIonEmitter(model){
-  const hand=model.getObjectByName('mixamorig:RightHand')||model.getObjectByName('RightHand');
+  const hand=model.getObjectByName('mixamorigRightHand')||model.getObjectByName('mixamorig:RightHand')||model.getObjectByName('RightHand');
   if(!hand)return;
   const emitter=new THREE.Group();emitter.position.set(0,.015,.035);emitter.rotation.x=-.12;hand.add(emitter);
   addBoxVisual(emitter,0,0,.12,.11,.1,.33,mats.darkMetal);
