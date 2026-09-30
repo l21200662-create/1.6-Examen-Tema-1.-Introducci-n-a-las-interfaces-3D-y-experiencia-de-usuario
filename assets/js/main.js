@@ -15,10 +15,10 @@ const ui = {
   elevatorGuide: $('elevatorGuide'), elevatorArrow: $('elevatorArrow'), elevatorText: $('elevatorText'), musicToggle: $('musicToggle'),
 };
 const LEVELS = [
-  { title: 'Despertar', objective: 'Recupera la muestra y encuentra la salida', samples: [[-15,-5]], enemies: [[15,-2]], enemyHealth: 1, enemySpeed: .86, timeLimit: 150, theme: 'lab', background: 0x101b18, atmosphere: 0x9df1c7, floor: 0x43544a },
-  { title: 'Cultivos inestables', objective: 'Recupera 2 muestras bajo presión', samples: [[-15,-7],[15,-7]], enemies: [[-15,3],[14,-2],[0,-13]], enemyHealth: 2, enemySpeed: 1.06, timeLimit: 135, theme: 'cryo', background: 0x0b1924, atmosphere: 0x77d9ed, floor: 0x294552 },
-  { title: 'Zona de cuarentena', objective: 'Asegura 3 muestras y evita a los infectados', samples: [[-15,-9],[14,-8],[0,7]], enemies: [[-15,3],[14,-2],[0,-13],[15,10],[-15,-12]], enemyHealth: 2, enemySpeed: 1.24, timeLimit: 120, theme: 'quarantine', background: 0x241211, atmosphere: 0xff765f, floor: 0x51312c },
-  { title: 'Extracción final', objective: 'Recupera 4 muestras, sobrevive y alcanza el elevador', samples: [[-15,-9],[15,-9],[-15,7],[15,7]], enemies: [[-15,3],[14,-2],[0,-13],[15,10],[-15,-12],[7,8],[-7,-3]], enemyHealth: 3, enemySpeed: 1.42, timeLimit: 105, theme: 'reactor', background: 0x0d1b23, atmosphere: 0x8ce8ff, floor: 0x243a48 },
+  { title: 'Despertar', objective: 'Recupera la muestra y encuentra la salida', samples: [[-15,-5]], enemies: [[15,-2]], enemyHealth: 1, enemySpeed: 2.25, timeLimit: 150, theme: 'lab', background: 0x101b18, atmosphere: 0x9df1c7, floor: 0x43544a },
+  { title: 'Cultivos inestables', objective: 'Recupera 2 muestras bajo presión', samples: [[-15,-7],[15,-7]], enemies: [[-15,3],[14,-2],[0,-13]], enemyHealth: 2, enemySpeed: 2.9, timeLimit: 135, theme: 'cryo', background: 0x0b1924, atmosphere: 0x77d9ed, floor: 0x294552 },
+  { title: 'Zona de cuarentena', objective: 'Asegura 3 muestras y evita a los infectados', samples: [[-15,-9],[14,-8],[0,7]], enemies: [[-15,3],[14,-2],[0,-13],[15,10],[-15,-12]], enemyHealth: 2, enemySpeed: 3.55, timeLimit: 120, theme: 'quarantine', background: 0x241211, atmosphere: 0xff765f, floor: 0x51312c },
+  { title: 'Extracción final', objective: 'Recupera 4 muestras, sobrevive y alcanza el elevador', samples: [[-15,-9],[15,-9],[-15,7],[15,7]], enemies: [[-15,3],[14,-2],[0,-13],[15,10],[-15,-12],[7,8],[-7,-3]], enemyHealth: 3, enemySpeed: 4.15, timeLimit: 105, theme: 'reactor', background: 0x0d1b23, atmosphere: 0x8ce8ff, floor: 0x243a48 },
 ];
 const CHARACTERS = [
   { name: 'ABUELA DEPORTIVA', hudName: 'ABUELA', role: 'Operadora veterana · ágil y resistente', initial: 'AG', suit: '#d8d8c5', accent: '#c8ee68', dark: '#28352f', visor: '#243b3c', silhouette: 'scout', model: './assets/characters/Sporty%20Granny%20(1).fbx', format: 'fbx' },
@@ -292,7 +292,7 @@ function buildLevelScenario(level) {
 function createPlayer() {
   const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(PLAYER_START[0], .98, PLAYER_START[1]));
   const collider = world.createCollider(RAPIER.ColliderDesc.capsule(.48, .31).setFriction(.1), body);
-  player = { body, collider, target: new THREE.Vector3(PLAYER_START[0],.98,PLAYER_START[1]), velocity: new THREE.Vector3(), facing: 0, invuln: 0, group: null, fallback: null, avatarLimbs: { arms:[], legs:[] }, avatarMotionBones: {}, appliedAvatarOffsets: [], animationMixer: null, avatarActions: {}, activeAvatarAction: null };
+  player = { body, collider, target: new THREE.Vector3(PLAYER_START[0],.98,PLAYER_START[1]), velocity: new THREE.Vector3(), facing: 0, invuln: 0, group: null, fallback: null, avatarLimbs: { arms:[], legs:[] }, avatarMotionBones: {}, avatarFooting: null, appliedAvatarOffsets: [], animationMixer: null, avatarActions: {}, activeAvatarAction: null };
   playerBody = body; playerCollider = collider;
   buildFallbackAvatar();
 }
@@ -369,10 +369,12 @@ async function loadSelectedAvatar(profile){
     player.fallback=null;player.fallbackMats=null;player.avatarLimbs={arms:[],legs:[]};player.group.add(holder);player.avatarModel=holder;
     const bones={};holder.traverse(node=>{if(node.isBone){const key=node.name.replace(/^mixamorig\d*/i,'mixamorig').replace(/^mixamorig/i,'').replace(/[^a-z0-9]/gi,'').toLowerCase();if(key&&!bones[key])bones[key]=node;}});
     player.avatarMotionBones={leftUpLeg:bones.leftupleg,rightUpLeg:bones.rightupleg,leftLeg:bones.leftleg,rightLeg:bones.rightleg,leftArm:bones.leftarm,rightArm:bones.rightarm,spine:bones.spine};player.appliedAvatarOffsets=[];
+    player.avatarFooting={bones:[bones.leftfoot,bones.rightfoot].filter(Boolean),restHeight:0};
     player.animationMixer=new THREE.AnimationMixer(holder);player.avatarActions={};player.activeAvatarAction=null;
     for(const name of ['Idle','Walk','Run','Attack'])if(mappedClips[name]?.tracks.length)player.avatarActions[name]=player.animationMixer.clipAction(mappedClips[name]);
     player.avatarActions.Attack?.setEffectiveTimeScale(5).setLoop(THREE.LoopOnce,1);
-    attachIonEmitter(model);if($('characterRole'))$('characterRole').textContent=profile.role;setAnimation(animState==='loading'?'Idle':animState);
+    attachIonEmitter(model);if($('characterRole'))$('characterRole').textContent=profile.role;setAnimation(animState==='loading'?'Idle':animState);player.animationMixer.update(0);holder.updateMatrixWorld(true);
+    const feet=player.avatarFooting.bones.map(bone=>bone.getWorldPosition(new THREE.Vector3()).y);if(feet.length)player.avatarFooting.restHeight=Math.min(...feet)-player.group.position.y;else player.avatarFooting=null;
   }catch(error){if(revision===avatarLoadRevision){if($('characterRole'))$('characterRole').textContent=`${profile.role} · PERSONAJE DE RESPALDO`;console.warn(`No se pudo cargar ${profile.name}; se conserva el personaje de respaldo.`,error);}}
 }
 
@@ -392,7 +394,7 @@ function buildFallbackAvatar() {
   }
   const group = new THREE.Group(); group.position.set(player.target.x,0,player.target.z); scene.add(group); player.group = group;
   const root = new THREE.Group(); group.add(root); player.fallback = root;
-  player.avatarMotionBones={};player.appliedAvatarOffsets=[];
+  player.avatarMotionBones={};player.avatarFooting=null;player.avatarModel=null;player.appliedAvatarOffsets=[];
   const profile=CHARACTERS[characterIndex],suit=mats.playerSuit.clone(),accent=mats.acid.clone(),dark=mats.darkMetal.clone(),visorMat=mats.visor.clone(),metal=mats.metal.clone();
   suit.color.set(profile.suit);accent.color.set(profile.accent);accent.emissive.set(profile.accent);dark.color.set(profile.dark);visorMat.color.set(profile.visor);
   player.fallbackMats={suit,accent,dark,visor:visorMat};
@@ -479,21 +481,34 @@ function buildPhysicsObjects() {
 function makeEnemyVisual(variantIndex = 0) {
   const variant = variantIndex % 3;
   const palettes = [
-    { skin:0x647e5c, armor:0x354437, glow:0xf06d54, scale:1 },
-    { skin:0x826064, armor:0x392e3c, glow:0xd44979, scale:1.12 },
-    { skin:0x677688, armor:0x2c3948, glow:0x77dfff, scale:.92 },
+    { skin:0x647e5c, armor:0x29342d, glow:0xff3d2e, scale:1.08 },
+    { skin:0x826064, armor:0x302633, glow:0xff2674, scale:1.16 },
+    { skin:0x677688, armor:0x26313e, glow:0x68ddff, scale:1.08 },
   ];
   const palette=palettes[variant],skin=new THREE.MeshStandardMaterial({color:palette.skin,roughness:.9}),armor=new THREE.MeshStandardMaterial({color:palette.armor,roughness:.76}),glow=new THREE.MeshStandardMaterial({color:palette.glow,emissive:palette.glow,emissiveIntensity:.6,roughness:.4});
   const group = new THREE.Group();
   const torso=addCylinderVisual(group,0,.9,0,.34,.42,.85,armor,12); torso.rotation.z=-.14;
   const chest=addCylinderVisual(group,0,1.02,.02,.27,.3,.47,skin,12); chest.rotation.z=-.14;
-  const head=new THREE.Mesh(new THREE.SphereGeometry(.27,14,12),skin); head.position.set(0,1.52,.05); head.castShadow=true; group.add(head);
-  addBoxVisual(group,0,1.38,.24,.31,.1,.12,glow);
+  const headPivot=new THREE.Group();headPivot.position.set(0,1.42,.04);group.add(headPivot);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.28,14,12),skin);head.position.y=.12;head.castShadow=true;headPivot.add(head);
+  addBoxVisual(headPivot,0,.07,.24,.34,.12,.12,armor);
+  const jaw=addBoxVisual(headPivot,0,-.08,.23,.26,.15,.16,mats.darkMetal);jaw.rotation.x=-.12;
+  const fangGeo=new THREE.ConeGeometry(.045,.17,5);
+  for(const x of [-.095,-.032,.032,.095]){const fang=new THREE.Mesh(fangGeo,mats.white);fang.position.set(x,-.12,.31);fang.rotation.z=Math.PI;headPivot.add(fang);}
   for(const s of [-1,1]){
-    const eye=new THREE.Mesh(new THREE.SphereGeometry(.05,8,8),glow); eye.position.set(s*.12,1.54,.28); group.add(eye);
-    const arm=addCylinderVisual(group,s*.4,.86,0,.12,.14,.72,skin,9); arm.rotation.z=s*.18;
-    addCylinderVisual(group,s*.14,.27,.01,.13,.14,.52,armor,9);
+    const eye=new THREE.Mesh(new THREE.SphereGeometry(.065,10,8),glow);eye.position.set(s*.12,.16,.29);headPivot.add(eye);
+    const socket=new THREE.Mesh(new THREE.SphereGeometry(.105,10,8),armor);socket.position.set(s*.12,.16,.265);headPivot.add(socket);headPivot.remove(eye);socket.add(eye);eye.position.set(0,0,.06);
+    const shoulder=new THREE.Mesh(new THREE.ConeGeometry(.19,.46,6),armor);shoulder.position.set(s*.4,1.13,-.04);shoulder.rotation.z=-s*.9;group.add(shoulder);
+    const arm=new THREE.Group();arm.position.set(s*.39,.94,.03);group.add(arm);
+    addCylinderVisual(arm,0,-.27,0,.13,.17,.68,skin,9);
+    for(let claw=0;claw<3;claw++){const talon=new THREE.Mesh(fangGeo,mats.white);talon.position.set((claw-1)*.105,-.59,.12);talon.rotation.x=.35;arm.add(talon);}
+    const leg=new THREE.Group();leg.position.set(s*.15,.49,0);group.add(leg);
+    addCylinderVisual(leg,0,-.21,0,.14,.16,.53,armor,9);
+    addBoxVisual(leg,0,-.48,.1,.25,.12,.34,armor);
+    (group.userData.armPivots??=[]).push(arm);(group.userData.legPivots??=[]).push(leg);
   }
+  for(const [x,y,z,rot] of [[0,1.25,-.33,0],[-.22,1.1,-.3,-.35],[.22,1.1,-.3,.35]]){const spike=new THREE.Mesh(fangGeo,armor);spike.position.set(x,y,z);spike.rotation.z=rot;spike.rotation.x=-.6;spike.scale.set(1.5,2.2,1.5);group.add(spike);}
+  group.userData.headPivot=headPivot;
   group.traverse(o=>{if(o.isMesh)o.castShadow=true;});
   group.scale.setScalar(palette.scale);
   return group;
@@ -502,10 +517,10 @@ function spawnEnemy(x,z,index,level=currentLevel()) {
   const body=world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(x,1,z));
   const collider=world.createCollider(RAPIER.ColliderDesc.capsule(.53,.25).setFriction(.1),body);
   const group=makeEnemyVisual(index+levelIndex); group.position.set(x,0,z); scene.add(group);
-  const enemy={body,collider,group,position:new THREE.Vector3(x,1,z),home:new THREE.Vector3(x,1,z),health:level.enemyHealth,speed:level.enemySpeed+index*.065,attackCooldown:.35+index*.18,stagger:0,knockback:new THREE.Vector3(),alive:true,bodyRemoved:false,id:index+1,phase:index*1.8,hitFlash:0,walkPhase:index};
+  const enemy={body,collider,group,position:new THREE.Vector3(x,1,z),home:new THREE.Vector3(x,1,z),health:level.enemyHealth,speed:level.enemySpeed+index*.12,attackCooldown:.45+index*.18,dashCooldown:1.1+index*.22,dashTime:0,stagger:0,knockback:new THREE.Vector3(),alive:true,bodyRemoved:false,id:index+1,phase:index*1.8,hitFlash:0,walkPhase:index};
   enemies.push(enemy);
   // Procedural glow puddle under each enemy highlights the threat.
-  const aura=new THREE.Mesh(new THREE.CircleGeometry(.63,24),new THREE.MeshBasicMaterial({color:0xd14932,transparent:true,opacity:.16,depthWrite:false}));
+  const aura=new THREE.Mesh(new THREE.CircleGeometry(.76,24),new THREE.MeshBasicMaterial({color:0xf02e28,transparent:true,opacity:.23,depthWrite:false}));
   aura.rotation.x=-Math.PI/2;aura.position.set(x,.028,z);scene.add(aura);enemy.aura=aura;
 }
 
@@ -712,14 +727,20 @@ function setAnimation(name){
 }
 function updateEnemies(dt){
   for(const e of enemies){if(!e.alive)continue;e.phase+=dt;const delta=player.group.position.clone().sub(e.position);delta.y=0;const dist=delta.length();
-    if(e.stagger>0){e.stagger=Math.max(0,e.stagger-dt);e.attackCooldown=Math.max(e.attackCooldown,.4);const x=e.position.x+e.knockback.x*dt,z=e.position.z+e.knockback.z*dt;e.body.setNextKinematicTranslation({x,y:1,z});e.knockback.multiplyScalar(Math.exp(-5*dt));continue;}
-    if(dist>.98){delta.normalize();const speed=e.speed*(dist<3?1.23:1);let x=e.position.x+delta.x*speed*dt,z=e.position.z+delta.z*speed*dt;
+    e.walkPhase+=dt*(dist>.98?e.speed*4.8:5.5);const gait=Math.sin(e.walkPhase);
+    e.group.userData.armPivots?.forEach((arm,i)=>{arm.rotation.x=gait*(i===0?0.42:-0.42);arm.rotation.z=(i===0?-.22:.22)+Math.max(0,gait)*.2;});
+    e.group.userData.legPivots?.forEach((leg,i)=>{leg.rotation.x=Math.sin(e.walkPhase+i*Math.PI)*.22;});
+    if(e.group.userData.headPivot)e.group.userData.headPivot.rotation.x=.08+Math.sin(e.phase*2.1)*.05;
+    if(e.stagger>0){e.stagger=Math.max(0,e.stagger-dt);e.dashTime=0;e.attackCooldown=Math.max(e.attackCooldown,.4);const x=e.position.x+e.knockback.x*dt,z=e.position.z+e.knockback.z*dt;e.body.setNextKinematicTranslation({x,y:1,z});e.knockback.multiplyScalar(Math.exp(-5*dt));continue;}
+    if(dist>.98){delta.normalize();e.dashCooldown-=dt;if(e.dashTime<=0&&e.dashCooldown<=0&&dist<8&&dist>2.6){e.dashTime=.48;e.dashCooldown=2.35+e.id*.12;}
+      const dashing=e.dashTime>0;if(dashing)e.dashTime=Math.max(0,e.dashTime-dt);
+      const speed=e.speed*(dist<3?1.2:1)*(dashing?1.8:1);let x=e.position.x+delta.x*speed*dt,z=e.position.z+delta.z*speed*dt;
       const blocked=(px,pz)=>solidBoxes.some(b=>b.high>.18&&b.low<1.78&&px>b.x-b.hx-.35&&px<b.x+b.hx+.35&&pz>b.z-b.hz-.35&&pz<b.z+b.hz+.35);
       if(blocked(x,z)){if(!blocked(x,e.position.z))z=e.position.z;else if(!blocked(e.position.x,z))x=e.position.x;else{x=e.position.x;z=e.position.z;}}
-      e.body.setNextKinematicTranslation({x,y:1,z});const facing=Math.atan2(delta.x,delta.z);e.body.setNextKinematicRotation({x:0,y:Math.sin(facing/2),z:0,w:Math.cos(facing/2)});e.walkPhase+=dt*speed*5;e.group.position.y=Math.sin(e.walkPhase)*.035;
+      e.body.setNextKinematicTranslation({x:THREE.MathUtils.clamp(x,-19.7,19.7),y:1,z:THREE.MathUtils.clamp(z,-14.7,14.7)});const facing=Math.atan2(delta.x,delta.z);e.body.setNextKinematicRotation({x:0,y:Math.sin(facing/2),z:0,w:Math.cos(facing/2)});e.group.position.y=Math.sin(e.walkPhase)*.045+(dashing?0.045:0);
     }
     e.attackCooldown-=dt;
-    if(dist<1.42&&e.attackCooldown<=0){e.attackCooldown=1.05;damagePlayer(9+Math.random()*5);}
+    if(dist<1.55&&e.attackCooldown<=0){e.attackCooldown=.88;damagePlayer(10+Math.random()*5);}
   }
 }
 function damagePlayer(amount){if(player.invuln>0)return;player.invuln=.55;health=Math.max(0,health-amount);playSound('hurt');updateHUD();addBurst(player.group.position.clone().add(new THREE.Vector3(0,1,0)),0xf06d54,8);if(health<=0)finish(false,'La integridad del traje llegó a cero.');}
@@ -877,7 +898,14 @@ function applyAvatarLocomotion(){
   offset(bones.leftArm,-swing*.62);offset(bones.rightArm,swing*.48*attack);
   offset(bones.spine,Math.sin(stride*2)*.018*strength);
 }
-function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);if(state==='playing')updateGame(dt);else{updateCamera(dt);updateSampleVisuals(clock.elapsedTime);}clearAvatarMotionOffsets();player?.animationMixer?.update(dt);applyAvatarLocomotion();renderer.render(scene,camera);}
+function keepAvatarFeetGrounded(){
+  const footing=player?.avatarFooting;if(!footing?.bones.length||!player.avatarModel)return;
+  player.avatarModel.updateMatrixWorld(true);
+  const lowest=Math.min(...footing.bones.map(bone=>bone.getWorldPosition(new THREE.Vector3()).y));
+  if(!Number.isFinite(lowest))return;
+  player.avatarModel.position.y+=player.group.position.y+footing.restHeight-lowest;
+}
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);if(state==='playing')updateGame(dt);else{updateCamera(dt);updateSampleVisuals(clock.elapsedTime);}clearAvatarMotionOffsets();player?.animationMixer?.update(dt);applyAvatarLocomotion();keepAvatarFeetGrounded();renderer.render(scene,camera);}
 
 async function init(){
   try{

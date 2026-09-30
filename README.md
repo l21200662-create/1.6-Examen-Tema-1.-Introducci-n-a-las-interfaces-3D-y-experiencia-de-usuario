@@ -10,7 +10,7 @@
 
 Videojuego web 3D en tercera persona ambientado en un laboratorio de contención. El sistema de bioseguridad ha fallado. El jugador debe recuperar muestras, enfrentar o evitar a los sujetos infectados y llegar al elevador de extracción. Cada fase transcurre en un escenario distinto, con obstáculos y amenazas más difíciles.
 
-La partida contiene **cuatro niveles progresivos**, cada uno con su propio escenario, límite de tiempo, cantidad de muestras, obstáculos y enemigos. Completa el objetivo y llega al elevador antes de que termine el tiempo. La misión se completa al superar el nivel 4; si la integridad del traje llega a cero o se agota el tiempo, se pierde la partida.
+La partida contiene **cuatro niveles progresivos**, cada uno con su propio escenario, límite de tiempo, cantidad de muestras, obstáculos y enemigos más rápidos y resistentes. Los infectados persiguen y embisten al jugador; dispara para frenarlos. Completa el objetivo y llega al elevador antes de que termine el tiempo. La misión se completa al superar el nivel 4; si la integridad del traje llega a cero o se agota el tiempo, se pierde la partida.
 
 ## Personajes
 
