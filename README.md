@@ -14,7 +14,7 @@ La partida contiene **cuatro niveles progresivos**, cada uno con su propio escen
 
 ## Personajes
 
-Antes de iniciar, usa las flechas del selector para elegir entre **Abuela Deportiva**, **Sujeto CH-17** y **BIO-03**. Abuela Deportiva usa el modelo `Sporty Granny.gltf` y sus animaciones de espera, caminar, correr y lanzamiento. CH-17 usa `Ch17_nonPBR.fbx` con el mismo conjunto de animaciones; el modelo se descarga al seleccionarlo. BIO-03 conserva su modelo del juego. Desde el menú de pausa puedes volver a la selección; hacerlo reinicia la misión.
+Antes de iniciar, usa las flechas del selector para elegir entre **Abuela Deportiva**, **Sujeto CH-17** y **BIO-03**. Abuela Deportiva usa `Sporty Granny (1).fbx` y CH-17 usa `Ch17_nonPBR.fbx`; ambos cargan los clips de espera, caminar, correr y lanzamiento. Los modelos se descargan al elegirlos. BIO-03 conserva su modelo del juego. Desde el menú de pausa puedes volver a la selección; hacerlo reinicia la misión.
 
 ## Cómo jugar
 
@@ -42,12 +42,12 @@ Antes de iniciar, usa las flechas del selector para elegir entre **Abuela Deport
 - `index.html`: interfaz, selector de personaje, HUD, pantallas del juego e import map.
 - `assets/css/styles.css`: estilos adaptables y componentes de la interfaz.
 - `assets/js/main.js`: escena 3D, física, controles, personajes, música, enemigos, niveles y reglas de la misión.
-- `assets/characters/`: modelos y clips de animación usados por Abuela Deportiva y CH-17.
+- `assets/characters/`: modelos FBX y clips de animación GLTF usados por Abuela Deportiva y CH-17.
 
 ## Tecnologías
 
 - **Three.js** renderiza los escenarios, los modelos, la cámara, la iluminación y los efectos. `GLTFLoader` y `FBXLoader` cargan los personajes.
-- Las animaciones de espera, caminar, correr y lanzar proceden de los archivos GLTF de Mixamo. El BIO-03 usa animación procedural. La música ambiental y los efectos se sintetizan con Web Audio.
+- Las animaciones de espera, caminar, correr y lanzar proceden de los clips GLTF de Mixamo y se aplican a los esqueletos FBX. El BIO-03 usa animación procedural. La música ambiental y los efectos se sintetizan con Web Audio.
 - **Rapier 3D** proporciona gravedad, colisionadores y cuerpos rígidos dinámicos para las cajas, tambores, viales y proyectiles.
 - HTML, CSS y JavaScript conforman la interfaz web. Se usan módulos y rutas relativas compatibles con GitHub Pages.
 

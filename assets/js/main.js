@@ -21,7 +21,7 @@ const LEVELS = [
   { title: 'Extracción final', objective: 'Recupera 4 muestras, sobrevive y alcanza el elevador', samples: [[-15,-9],[15,-9],[-15,7],[15,7]], enemies: [[-15,3],[14,-2],[0,-13],[15,10],[-15,-12],[7,8],[-7,-3]], enemyHealth: 3, enemySpeed: 1.42, timeLimit: 105, theme: 'reactor', background: 0x0d1b23, atmosphere: 0x8ce8ff, floor: 0x243a48 },
 ];
 const CHARACTERS = [
-  { name: 'ABUELA DEPORTIVA', hudName: 'ABUELA', role: 'Operadora veterana · ágil y resistente', initial: 'AG', suit: '#d8d8c5', accent: '#c8ee68', dark: '#28352f', visor: '#243b3c', silhouette: 'scout', model: './assets/characters/Sporty Granny.gltf', format: 'gltf' },
+  { name: 'ABUELA DEPORTIVA', hudName: 'ABUELA', role: 'Operadora veterana · ágil y resistente', initial: 'AG', suit: '#d8d8c5', accent: '#c8ee68', dark: '#28352f', visor: '#243b3c', silhouette: 'scout', model: './assets/characters/Sporty%20Granny%20(1).fbx', format: 'fbx' },
   { name: 'SUJETO CH-17', hudName: 'CH-17', role: 'Unidad de prueba · traje de contención', initial: '17', suit: '#8ea4ba', accent: '#f3a25d', dark: '#263647', visor: '#1e3345', silhouette: 'guard', model: './assets/characters/Ch17_nonPBR.fbx', format: 'fbx' },
   { name: 'BIO-03', hudName: 'BIO-03', role: 'Técnica de laboratorio', initial: '03', suit: '#92c8b6', accent: '#ff8e9b', dark: '#29433f', visor: '#213e42', silhouette: 'scientist' },
 ];
