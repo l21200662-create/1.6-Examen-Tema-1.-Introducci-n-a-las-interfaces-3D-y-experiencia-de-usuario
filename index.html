@@ -59,13 +59,13 @@
         <div class="briefing-grid"><div><span class="brief-number">01</span><span><b>RECUPERA</b><small>Muestras de cultivo</small></span></div><div><span class="brief-number">02</span><span><b>CONTÉN</b><small>Impulsa a los hostiles</small></span></div><div><span class="brief-number">03</span><span><b>SUPERA</b><small>4 escenarios progresivos</small></span></div></div>
         <div class="character-picker" aria-label="Selección de personaje">
           <button class="character-arrow" id="characterPrev" aria-label="Personaje anterior">‹</button>
-          <div class="character-portrait" id="characterPortrait"><span id="characterInitial">03</span><i></i></div>
-          <div class="character-details"><small>OPERADOR SELECCIONADO</small><b id="characterName">BIO-03</b><span id="characterRole">Técnica de laboratorio</span></div>
-          <div class="character-dots" id="characterDots" aria-hidden="true"><i></i><i></i><i class="selected"></i></div>
+          <div class="character-portrait" id="characterPortrait"><span id="characterInitial">AG</span><i></i></div>
+          <div class="character-details"><small>OPERADORA SELECCIONADA</small><b id="characterName">ABUELA DEPORTIVA</b><span id="characterRole">Operadora veterana · ágil y resistente</span></div>
+          <div class="character-dots" id="characterDots" aria-hidden="true"><i class="selected"></i><i></i><i></i></div>
           <button class="character-arrow" id="characterNext" aria-label="Siguiente personaje">›</button>
         </div>
         <div class="start-row"><button class="primary-button" id="startBtn"><span>INICIAR MISIÓN</span><b>↗</b></button><div class="start-note"><span class="key-cluster"><kbd>W</kbd><span><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span></span><span>W ADELANTE · A DERECHA<br>D IZQUIERDA · S ATRÁS<br><small>SHIFT CORRER · MOUSE PARA GIRAR CÁMARA</small></span></div></div>
-        <div class="footer-note"><span>PROTOCOLO DE EMERGENCIA ACTIVO</span><span class="mono">v1.2.4 <i>●</i> SISTEMA EN LÍNEA</span></div>
+        <div class="footer-note"><span>PROTOCOLO DE EMERGENCIA ACTIVO</span><span class="mono">v1.2.5 <i>●</i> SISTEMA EN LÍNEA</span></div>
       </div>
       <div class="side-label mono">ESTACIÓN BIOLÓGICA &nbsp;—&nbsp; 2049</div>
     </section>
@@ -85,7 +85,7 @@
     if (location.protocol === 'file:') {
       showStartupError('Abre "abrir-juego.bat" para iniciar el juego. No abras index.html directamente.');
     } else {
-      import('./assets/js/main.js?v=1.2.4').catch((cause) => {
+      import('./assets/js/main.js?v=1.2.5').catch((cause) => {
         console.error(cause);
         showStartupError('No se pudo cargar el juego. Comprueba tu conexión a Internet y vuelve a intentarlo.');
       });

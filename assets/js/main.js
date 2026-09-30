@@ -48,7 +48,7 @@ let moveYaw = null;
 let initialized = false, state = 'loading', elapsed = 0, levelTimeRemaining = 0, health = 100, collected = 0;
 let power = 13, enemies = [], samples = [], props = [], projectiles = [], particles = [], exitDoor;
 let lastInteract = 0, animState = 'Idle', playerSpeed = 0, lastShot = 0, attackAnimTimer = 0;
-let levelIndex = 0, characterIndex = 2, userRequestedCharacterAsset = false;
+let levelIndex = 0, characterIndex = 0, userRequestedCharacterAsset = false;
 const solidBoxes = [];
 const cameraOccluders = [];
 let levelScene = null;
@@ -860,7 +860,12 @@ function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDel
 async function init(){
   try{
     await RAPIER.init();world=new RAPIER.World({x:0,y:-9.81,z:0});world.timestep=1/60;
-    buildRoom();buildPhysicsObjects();createPlayer();setupLevel(0);bindEvents();applyCharacterAppearance();initialized=true;state='ready';
+    buildRoom();buildPhysicsObjects();createPlayer();setupLevel(0);bindEvents();applyCharacterAppearance();
+    // Load the default character before revealing the start screen so the first
+    // mission never begins with the procedural BIO-03 fallback avatar.
+    await loadSelectedAvatar(CHARACTERS[characterIndex]);
+    userRequestedCharacterAsset=true;
+    initialized=true;state='ready';
     camera.position.set(0,5,19);camera.lookAt(0,1,0);ui.loading.classList.add('done');setTimeout(()=>ui.loading.remove(),650);animate();
   }catch(err){console.error(err);ui.loading.classList.add('done');showError('No se pudo inicializar la física. Recarga la página e inténtalo de nuevo.');}
 }
